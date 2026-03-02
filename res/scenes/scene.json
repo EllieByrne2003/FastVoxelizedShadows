@@ -1,0 +1,64 @@
+{
+    "description": "This is just to work out how I should structure this.",
+    "models": [
+        {
+            "position": "0 0 0",
+            "rotation": "0 0 0",
+            "scale": "1 1 1",
+
+            "models": [
+                {
+                    "position": "0 0 0",
+                    "rotation": "0 0 0",
+                    "scale": "10 10 10",
+
+                    "mesh": "sphere.obj",
+                    "texture": "earth.jpg",
+
+                    "shader": {
+                        "vertex": "",
+                        "fragment": ""
+                    },
+
+                    "shadowShader": {
+                        "vertex": "",
+                        "fragment": ""
+                    },
+
+                    "animations": [
+                        {
+                            "time": "10",
+                            "rotation": "0 360 0"
+                        }
+                    ]
+                },
+                {
+                    "position": "10 0 0",
+                    "rotation": "0 0 0",
+                    "scale": "2 2 2",
+
+                    "mesh": "sphere.obj",
+                    "texture": "moon.jpg",
+
+                    "animations": [
+                        {
+                            "time": "300",
+
+                            "actions": [
+                                {
+                                    "rotation": "0 360 0",
+
+                                    "yAxis" : "0 1 0"
+                                },
+                                {
+                                    "rotation": "0 360 0"
+                                }
+                            ]
+                        }
+                    ]
+
+                }
+            ]
+        }
+    ]
+}

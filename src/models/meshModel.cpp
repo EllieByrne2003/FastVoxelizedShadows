@@ -1,0 +1,81 @@
+#include "models.hpp"
+
+#include <GL/glew.h>
+#include <GL/gl.h>
+
+#include "../animation/animation.hpp"
+#include "../shaders/shaders.hpp"
+#include "../texture/texture.hpp"
+#include "../mesh/mesh.hpp"
+
+MeshModel::MeshModel(const vec3 &position, const vec3 &rotation, const vec3 &scale, const Shader *shader, const Shader *shadowShader, const Mesh *mesh, const Texture *texture) :
+    Model(position, rotation, scale)
+{
+    this->mesh = mesh;
+
+    this->texture = texture;
+
+    this->shader = shader;
+    this->shadowShader = shadowShader;
+}
+
+// TODO have some null checking here
+MeshModel::~MeshModel() {
+    delete mesh;
+
+    delete texture;
+
+    delete shader;
+    delete shadowShader;
+}
+
+bool MeshModel::isStatic() const {
+    return animations.empty();
+}
+
+bool MeshModel::isDynamic() const {
+    return !animations.empty();
+}
+
+// void MeshModel::setShader(const std::shared_ptr<Shader> &shader) {
+//     this->shader = shader;
+// }
+
+void MeshModel::update(const float deltaTime) {
+    if(isStatic()) {
+        return;
+    }
+
+    Animation *animation = animations[currentAnimation];
+    const float timePassed = animation->update(this, deltaTime);
+
+    // Progress to next animation or start chain over again
+    if(animation->isComplete()) {
+        currentAnimation++;
+        animation->reset();
+
+        if(currentAnimation >= animations.size()) {
+            currentAnimation = 0;
+
+            resetPosition();
+            resetRotation();
+            resetScale();
+        }
+    }
+
+    // If the animation didn't use all the time, recurse to use the remainder
+    if(timePassed < deltaTime) {
+        update(deltaTime - timePassed);
+    }
+}
+
+void MeshModel::draw(Renderer &renderer, const mat4 &parentModel) const {
+    // TODO implement
+
+    // Bind the shader, textures, normal maps etc
+    shader->bind();
+    texture->bind(0);
+
+    // draw mesh
+    mesh->draw();
+}
