@@ -1,3 +1,3 @@
-OBJS := gl.o meshes.o textures.o
+OBJS := stb_image.o
 DIRS := 
 include $(SUB_MAKE_INCLUDE)

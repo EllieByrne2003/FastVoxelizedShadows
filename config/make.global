@@ -38,8 +38,8 @@ clean-subdirs:
 
 # dependencies
 %.o: %.c
-	@echo -e "\t" CC $(OBJCFLAGS) $< -o $@
-	@$(CC) $(OBJCFLAGS) $< -o $@
+	@echo -e "\t" CC $(OBJCFLAGS) $< -o $(OBJ_DEST)/$@
+	@$(CC) $(OBJCFLAGS) $< -o $(OBJ_DEST)/$@
 
 %.o: %.cpp
 	@echo -e "\t" CXX $(OBJCXXFLAGS) $< -o $(OBJ_DEST)/$@
