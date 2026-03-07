@@ -75,13 +75,23 @@ void CompositeModel::update(const float deltaTime) {
     }
 }
 
-void CompositeModel::draw(Renderer &renderer, const mat4 &parentModel) const {
+void CompositeModel::draw(const mat4 &parentModel) const {
     // Create model matrix and combine with parentModel matrix
     const mat4 localModel = createLocalModelMatrix();
     const mat4 trueModel = parentModel * localModel;
 
     for(Model *const model : models) {
-        model->draw(renderer, trueModel);
+        model->draw(trueModel);
+    }
+}
+
+void CompositeModel::drawDepths(const bool drawEntry, const mat4 &parentModel) const {
+    // Create model matrix and combine with parentModel matrix
+    const mat4 localModel = createLocalModelMatrix();
+    const mat4 trueModel = parentModel * localModel;
+
+    for(Model *const model : models) {
+        model->drawDepths(drawEntry, trueModel);
     }
 }
 
