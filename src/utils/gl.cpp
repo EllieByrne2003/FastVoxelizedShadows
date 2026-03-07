@@ -12,3 +12,8 @@ void deleteBuffer(GLuint *buffer) {
     glDeleteBuffers(1, buffer);
     delete buffer;
 }
+
+void deleteTexture(GLuint *texture) {
+    glDeleteTextures(1, texture);
+    delete texture;
+}
