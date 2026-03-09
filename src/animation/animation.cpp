@@ -11,6 +11,11 @@ Animation::~Animation() {
 
 }
 
+Animation * Animation::readAnimation(const json &jsonAnimation) {
+    // TODO implement
+    return nullptr;
+}
+
 float Animation::update(Model *model, const float deltaTime) {
     const float timeLeft = totalTime - currentTime;
 
