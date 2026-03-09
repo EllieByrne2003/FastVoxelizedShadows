@@ -43,3 +43,4 @@
 .vscode/*
 .cache/*
 bin/*
+compile_commands.json
