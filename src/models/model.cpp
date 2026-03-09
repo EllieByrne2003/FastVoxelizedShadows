@@ -4,7 +4,8 @@
 
 #include "../animation/animation.hpp"
 #include "../shaders/shaders.hpp"
-#include "../utils/utils.hpp"
+#include "../texture/texture.hpp"
+#include "../mesh/mesh.hpp"
 
 Model::Model(const vec3 &position, const vec3 &rotation, const vec3 &scale) {
     this->position = position;
@@ -22,7 +23,6 @@ Model * Model::readModel(const json &jsonModel) {
     if(!jsonModel.contains("position")) {
         return nullptr;
     }
-
 
     if(!jsonModel.contains("rotation")) {
         return nullptr;
@@ -57,6 +57,22 @@ Model * Model::readModel(const json &jsonModel) {
         // Can't have both
         return nullptr;
     } else if(jsonModel.contains("mesh")) {
+        if(!jsonModel.contains("mesh")) {
+            return nullptr;
+        }
+
+        if(!jsonModel.contains("texture")) {
+            return nullptr;
+        }
+
+        if(!jsonModel.contains("shader")) {
+            return nullptr;
+        }
+
+        if(!jsonModel.contains("shadowShader")) {
+            return nullptr;
+        }
+
         Shader *shader = Shader::readShader(jsonModel["shader"]);
         if(shader == nullptr) {
             return nullptr;
@@ -69,17 +85,34 @@ Model * Model::readModel(const json &jsonModel) {
             return nullptr;
         }
 
-        GLuint VAO, VBO, EBO;
-        const int indicesCount = readMesh(jsonModel["mesh"], VAO, VBO, EBO);
-
-        if(indicesCount <= 0) {
+        Mesh *mesh = Mesh::readMesh(jsonModel["mesh"]);
+        if(mesh == nullptr) {
             delete shader;
             delete shadowShader;
 
             return nullptr;
         }
 
-        model = new MeshModel(position, rotation, scale, shader, shadowShader, VAO, VBO, EBO, indicesCount);
+        Texture *texture = Texture::readTexture(jsonModel["texture"]);
+        if(texture == nullptr) {
+            delete shader;
+            delete shadowShader;
+            delete mesh;
+
+            return nullptr;
+        }
+
+        // GLuint VAO, VBO, EBO;
+        // const int indicesCount = readMesh(jsonModel["mesh"], VAO, VBO, EBO);
+
+        // if(indicesCount <= 0) {
+        //     delete shader;
+        //     delete shadowShader;
+
+        //     return nullptr;
+        // }
+
+        model = new MeshModel(position, rotation, scale, shader, shadowShader, mesh, texture);
     } else if(jsonModel.contains("models")) {
         model = new CompositeModel(position, rotation, scale);
 
