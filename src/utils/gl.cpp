@@ -17,3 +17,8 @@ void deleteTexture(GLuint *texture) {
     glDeleteTextures(1, texture);
     delete texture;
 }
+
+void deleteShaderProgram(GLuint *shaderProgram) {
+    glDeleteProgram(*shaderProgram);
+    delete shaderProgram;
+}
