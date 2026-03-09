@@ -1,0 +1,28 @@
+{
+    "name": "test",
+    "description": "Test of my loading functions",
+    "models": [
+        {
+            "position": "0 0 0",
+            "rotation": "0 0 0",
+            "scale": "1 1 1",
+
+            "mesh": "teapot.obj",
+            "texture": "wall.jpg",
+
+            "shader": {
+                "vertex": "simpleVertex.glsl",
+                "fragment": "simpleFragment.glsl"
+            },
+
+            "shadowShader": {
+                "vertex": "simpleVertex.glsl",
+                "fragment": "simpleFragment.glsl"
+            },
+
+            "animations": [
+
+            ]
+        }
+    ]
+}
