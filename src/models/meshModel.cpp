@@ -4,6 +4,7 @@
 #include <GL/gl.h>
 
 #include "../animation/animation.hpp"
+#include "../renderer/renderer.hpp"
 #include "../shaders/shaders.hpp"
 #include "../texture/texture.hpp"
 #include "../mesh/mesh.hpp"
@@ -69,12 +70,41 @@ void MeshModel::update(const float deltaTime) {
     }
 }
 
-void MeshModel::draw(Renderer &renderer, const mat4 &parentModel) const {
-    // TODO implement
+void MeshModel::draw(const mat4 &parentModel) const {
+    const Renderer &renderer = Renderer::getInstance();
+
+    // Create model matrix and combine with parentModel matrix then make mvp
+    const mat4 localModel = createLocalModelMatrix();
+    const mat4 trueModel = parentModel * localModel;
+    const mat4 mvp = renderer.getMVP(trueModel);
+
+    // Bind the shader and setup the uniforms
+    shader->bind();
+    shader->passMVP(mvp);
+    shader->passShaderUniforms();
+    shader->passModelUniforms(this);
+
+    // Bind textures, normal maps, etc if present
+    // TODO implement above
+    texture->bind(0);
+
+    // draw mesh
+    mesh->draw();
+}
+
+void MeshModel::drawDepths(const bool drawEntry, const mat4 &parentModel) const {
+    const Renderer &renderer = Renderer::getInstance();
+
+    // Create model matrix and combine with parentModel matrix then make mvp
+    const mat4 localModel = createLocalModelMatrix();
+    const mat4 trueModel = parentModel * localModel;
+    const mat4 mvp = renderer.getMVP(trueModel);
 
     // Bind the shader, textures, normal maps etc
-    shader->bind();
-    texture->bind(0);
+    shadowShader->bind();
+    shadowShader->passMVP(mvp);
+    shadowShader->passShaderUniforms();
+    shadowShader->passModelUniforms(this);
 
     // draw mesh
     mesh->draw();
