@@ -70,7 +70,7 @@ void MeshModel::update(const float deltaTime) {
     }
 }
 
-void MeshModel::draw(const mat4 &parentModel) const {
+void MeshModel::draw(const Scene *const scene, const mat4 &parentModel) const {
     const Renderer &renderer = Renderer::getInstance();
 
     // Create model matrix and combine with parentModel matrix then make mvp
@@ -80,9 +80,10 @@ void MeshModel::draw(const mat4 &parentModel) const {
 
     // Bind the shader and setup the uniforms
     shader->bind();
-    shader->passMVP(mvp);
+    shader->passMVP(mvp); // TODO this can be done in model uniform function
     shader->passShaderUniforms();
-    shader->passModelUniforms(this);
+    shader->passModelUniforms(this, trueModel);
+    // shader->passSceneUniforms(scene);
 
     // Bind textures, normal maps, etc if present
     // TODO implement above
@@ -92,7 +93,7 @@ void MeshModel::draw(const mat4 &parentModel) const {
     mesh->draw();
 }
 
-void MeshModel::drawDepths(const bool drawEntry, const mat4 &parentModel) const {
+void MeshModel::drawDepths(const Scene *const scene, const bool drawEntry, const mat4 &parentModel) const {
     const Renderer &renderer = Renderer::getInstance();
 
     // Create model matrix and combine with parentModel matrix then make mvp
@@ -104,7 +105,8 @@ void MeshModel::drawDepths(const bool drawEntry, const mat4 &parentModel) const 
     shadowShader->bind();
     shadowShader->passMVP(mvp);
     shadowShader->passShaderUniforms();
-    shadowShader->passModelUniforms(this);
+    shadowShader->passModelUniforms(this, trueModel);
+    shader->passSceneUniforms(scene);
 
     // draw mesh
     mesh->draw();

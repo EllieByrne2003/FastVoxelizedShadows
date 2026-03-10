@@ -17,6 +17,7 @@ class Animation;
 class Renderer;
 class Texture;
 class Shader;
+class Scene;
 class Mesh;
 
 class Model {
@@ -86,8 +87,8 @@ public:
 
     // virtual void setShader(const std::shared_ptr<Shader> &shader) = 0;
 
-    virtual void draw(const mat4 &parentModel = mat4(1.0f)) const = 0;
-    virtual void drawDepths(const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const = 0;
+    virtual void draw(const Scene *const scene, const mat4 &parentModel = mat4(1.0f)) const = 0;
+    virtual void drawDepths(const Scene *const scene, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const = 0;
     // virtual void draw() const = 0;
 };
 
@@ -114,8 +115,8 @@ public:
 
     void update(const float deltaTime) override final;
 
-    void draw(const mat4 &parentModel = mat4(1.0f)) const override final;
-    void drawDepths(const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
+    void draw(const Scene *const scene, const mat4 &parentModel = mat4(1.0f)) const override final;
+    void drawDepths(const Scene *const scene, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
 
     // Class specific functions
     void bindShader() const;
@@ -139,8 +140,8 @@ public:
 
     virtual void update(const float deltaTime) final;
 
-    void draw(const mat4 &parentModel = mat4(1.0f)) const override final;
-    void drawDepths(const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
+    void draw(const Scene *const scene, const mat4 &parentModel = mat4(1.0f)) const override final;
+    void drawDepths(const Scene *const scene, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
 
     // Class specific functions
     void addModel(Model *model);
