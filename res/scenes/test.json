@@ -7,22 +7,30 @@
             "rotation": "0 0 0",
             "scale": "1 1 1",
 
-            "mesh": "teapot.obj",
-            "texture": "wall.jpg",
+            "mesh": "sphere.obj",
+            "texture": "moonnormal.jpg",
 
             "shader": {
-                "vertex": "simpleVertex.glsl",
-                "fragment": "simpleFragment.glsl"
+                "vertex": "textured/vertex.glsl",
+                "fragment": "textured/fragment.glsl"
             },
 
             "shadowShader": {
-                "vertex": "simpleVertex.glsl",
-                "fragment": "simpleFragment.glsl"
+                "vertex": "depth/vertex.glsl",
+                "fragment": "depth/fragment.glsl"
             },
 
             "animations": [
 
             ]
+        }
+    ],
+    "lights": [
+        {
+            "position": "0 100 100",
+            "direction": "0 -1 -1",
+            "colour": "0 1 0",
+            "intensity": 1.0
         }
     ]
 }
