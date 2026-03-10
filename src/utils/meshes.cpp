@@ -95,8 +95,6 @@ int readOBJ(const std::string &filepath, GLuint &VAO, GLuint &VBO, GLuint &EBO) 
 
             if(faceIndices.size() == 3) {
                 rawIndices.push_back(faceIndices[0]);
-                rawIndices.push_back(faceIndices[1]);
-                rawIndices.push_back(faceIndices[2]);
             } else if(faceIndices.size() == 4) {
                 rawIndices.push_back(faceIndices[0]);
                 rawIndices.push_back(faceIndices[1]);
@@ -109,6 +107,19 @@ int readOBJ(const std::string &filepath, GLuint &VAO, GLuint &VBO, GLuint &EBO) 
                 // TODO crash or some, idk. Can't handle this
             }
         }
+    }
+
+    // Add some values in case none existed
+    if(positions.size() <= 0) {
+        positions.push_back(vec3(0.0f));
+    }
+
+    if(normals.size() <= 0) {
+        normals.push_back(vec3(0.0f));
+    }
+
+    if(texs.size() <= 0) {
+        texs.push_back(vec2(0.0f));
     }
 
     file.close();
