@@ -9,6 +9,7 @@ using namespace glm;
 using json = nlohmann::json;
 
 class Model;
+class Scene;
 
 typedef unsigned int GLuint;
 
@@ -29,5 +30,6 @@ public:
     void bind() const;
     void passMVP(const mat4 &mvp) const;
     virtual void passShaderUniforms() const;
-    virtual void passModelUniforms(const Model *const model) const;
+    virtual void passModelUniforms(const Model *const model, const mat4 &trueMatrix) const;
+    virtual void passSceneUniforms(const Scene *const scene) const;
 };
