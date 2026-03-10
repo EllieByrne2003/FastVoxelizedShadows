@@ -46,7 +46,7 @@ void main()
         finalColor = vec3(0.0, 0.0, 0.0);
     }
 
-    finalColor = vec3(0.0, 1.0, 0.0);
+    //finalColor = vec3(0.0, 1.0, 0.0);
 
     FragColor = vec4(finalColor, 1.0);
 }

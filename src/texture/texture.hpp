@@ -22,7 +22,11 @@ public:
 
     static Texture * readTexture(const std::string &filename);
 
+    static Texture * createTexture(const int width, const int height, const int nChannels);
+
     void bind(const int slot) const;
+    void bindToFrameBuffer() const;
+    void unbindFromFrameBuffer() const;
 
     // TODO have some way to retrieve image info 
 };

@@ -11,8 +11,8 @@
             "texture": "moonnormal.jpg",
 
             "shader": {
-                "vertex": "textured/vertex.glsl",
-                "fragment": "textured/fragment.glsl"
+                "vertex": "simpleShadow/vertex.glsl",
+                "fragment": "simpleShadow/fragment.glsl"
             },
 
             "shadowShader": {

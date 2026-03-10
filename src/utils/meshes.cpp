@@ -95,6 +95,8 @@ int readOBJ(const std::string &filepath, GLuint &VAO, GLuint &VBO, GLuint &EBO) 
 
             if(faceIndices.size() == 3) {
                 rawIndices.push_back(faceIndices[0]);
+                rawIndices.push_back(faceIndices[1]);
+                rawIndices.push_back(faceIndices[2]);
             } else if(faceIndices.size() == 4) {
                 rawIndices.push_back(faceIndices[0]);
                 rawIndices.push_back(faceIndices[1]);

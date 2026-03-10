@@ -90,78 +90,78 @@ void Scene::drawDepths(const bool drawEntry) {
     }
 }
 void Scene::setupLights(const bool voxelize) {
-    // // TODO do this, for now just bodge it
+    // TODO do this, for now just bodge it
 
-    // Renderer &renderer = Renderer::getInstance();
+    Renderer &renderer = Renderer::getInstance();
 
-    // // Create texture, bind to view buffer later
-    // Texture *depth = Texture::createTexture(1024, 1024, 1);
+    // Create texture, bind to view buffer later
+    Texture *depth = Texture::createTexture(1024, 1024, 1);
 
-    // GLuint depthMapFBO;
-    // glGenFramebuffers(1, &depthMapFBO);
-    // glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    GLuint depthMapFBO;
+    glGenFramebuffers(1, &depthMapFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 
-    // // Attach the depth texture to the FBO
-    // depth->bindToFrameBuffer();
+    // Attach the depth texture to the FBO
+    depth->bindToFrameBuffer();
 
-    // // Explicitly tell OpenGL that we will not render any color data
-    // glDrawBuffer(GL_NONE);
-    // glReadBuffer(GL_NONE);
+    // Explicitly tell OpenGL that we will not render any color data
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
 
-    // // Check if the framebuffer is complete
-    // if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    //     // Handle error
-    //     std::cerr << "Something wrong with depths" << std::endl;
-    // }
+    // Check if the framebuffer is complete
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        // Handle error
+        // std::cerr << "Something wrong with depths" << std::endl;
+    }
 
-    // // Unbind the FBO for now
-    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // Unbind the FBO for now
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // // Take first light, setup renderer
-    // const Light *const light = lights[0];
-    // renderer.setView(light->get_view_matrix());
-    // renderer.setProj(glm::ortho(0.0f, 1024.0f, 0.0f, 1024.0f, 0.1f, 1000.0f)); // TODO figure out proper values
+    // Take first light, setup renderer
+    const Light *const light = lights[0];
+    renderer.setView(light->get_view_matrix());
+    renderer.setProj(glm::ortho(0.0f, 1024.0f, 0.0f, 1024.0f, 0.1f, 1000.0f)); // TODO figure out proper values
 
 
-    // glViewport(0, 0, 1024, 1024);   // width/height = depth texture dimensions
-    // glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    // glClear(GL_DEPTH_BUFFER_BIT);
+    glViewport(0, 0, 1024, 1024);   // width/height = depth texture dimensions
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
 
-    // // Draw depths
-    // this->drawDepths(true);
+    // Draw depths
+    this->drawDepths(true);
 
-    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    depth->bind(1);
+
+
+    // float *entryDepths = new float[1024 * 1024 * 4];
+    // glReadPixels(0, 0, 1024, 1024, GL_DEPTH_COMPONENT, GL_FLOAT, entryDepths);
+
+    // stbi_write_bmp("depth.bmp", 1024, 1024, 4, entryDepths);
+
+    // // Bind texture to slot 1
+    // // depth->unbindFromFrameBuffer(); // TODO preserve width and height?
     // depth->bind(1);
 
+    if(voxelize) {
+        // Spin up some threads (max of like 8 or something)
 
-    // // float *entryDepths = new float[1024 * 1024 * 4];
-    // // glReadPixels(0, 0, 1024, 1024, GL_DEPTH_COMPONENT, GL_FLOAT, entryDepths);
+        // Create texture for entry and exit
 
-    // // stbi_write_bmp("depth.bmp", 1024, 1024, 4, entryDepths);
+        // Draw entry depths
 
-    // // // Bind texture to slot 1
-    // // // depth->unbindFromFrameBuffer(); // TODO preserve width and height?
-    // // depth->bind(1);
+        // Draw exit depths
 
-    // if(voxelize) {
-    //     // Spin up some threads (max of like 8 or something)
+        // Recover data
 
-    //     // Create texture for entry and exit
+        // Process it
+    } else {
+        // Make texture array big enough for all lights
 
-    //     // Draw entry depths
+        // For each light assign index, draw shadows to it
 
-    //     // Draw exit depths
-
-    //     // Recover data
-
-    //     // Process it
-    // } else {
-    //     // Make texture array big enough for all lights
-
-    //     // For each light assign index, draw shadows to it
-
-    //     // 
-    // }
+        // 
+    }
 }
 
 void Scene::addModel(Model *model) {
