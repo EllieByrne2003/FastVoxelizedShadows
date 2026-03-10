@@ -15,8 +15,8 @@ private:
 
     std::mutex glMutex;
 
-    mat4 view;
-    mat4 proj;
+    mat4 view = mat4(1.0f);
+    mat4 proj = mat4(1.0f);
 
 protected:
 
