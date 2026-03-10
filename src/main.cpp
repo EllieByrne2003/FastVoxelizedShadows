@@ -5,7 +5,15 @@
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/glm.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+using namespace glm;
+
 #include "scene/scene.hpp"
+#include "renderer/renderer.hpp"
+
+void processKey(Scene *scene, GLFWwindow *window);
+void processCursorPos(Scene *scene, const double xPos, const double yPos);
 
 int main() {
     if(!glfwInit()) {
@@ -31,9 +39,7 @@ int main() {
     }
 
     std::string sceneName("test.json");
-
     std::cout << "loading: " << sceneName << std::endl;
-
     Scene *scene = Scene::readScene(sceneName);
 
     if(scene != nullptr) {
@@ -43,10 +49,32 @@ int main() {
         return -1;
     }
 
+    // scene->setupLights(false); // TODO should be true, this should be called each frame
+
+    // Renderer &renderer = Renderer::getInstance();
+    // renderer.setView(mat4(1.0f));
+    // renderer.setProj(mat4(1.0f));
+
+    const mat4 projection = glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
+    // Renderer::getInstance().setProj(projection);
+    
+    glEnable(GL_DEPTH_TEST);
+    // glCullFace(GL_FRONT);
+
     do {
         glClearColor(0.3f, 0.0f, 0.5f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
+        // Get movement
+        processKey(scene, window);
+
+        // Get mouse location and process it
+        double xPos, yPos;
+        glfwGetCursorPos(window, &xPos, &yPos);
+        processCursorPos(scene, xPos, yPos);
+
+        // Draw scene
+        Renderer::getInstance().setProj(projection);
         scene->draw();
 
         glfwPollEvents();
@@ -55,4 +83,34 @@ int main() {
 
 
     return 0;
+}
+
+void processKey(Scene *scene, GLFWwindow *window) {
+    static double lastTime = glfwGetTime();
+
+    const double currentTime = glfwGetTime();
+    const double deltaTime   = currentTime - lastTime;
+    lastTime = currentTime;
+
+    if(glfwGetKey(window, GLFW_KEY_W))          scene->move(FORWARD,  deltaTime);
+    if(glfwGetKey(window, GLFW_KEY_S))          scene->move(BACKWARD, deltaTime);
+    if(glfwGetKey(window, GLFW_KEY_A))          scene->move(LEFT,     deltaTime);
+    if(glfwGetKey(window, GLFW_KEY_D))          scene->move(RIGHT,    deltaTime);
+    if(glfwGetKey(window, GLFW_KEY_SPACE))      scene->move(UP,       deltaTime);
+    if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) scene->move(DOWN,     deltaTime);
+
+    lastTime = currentTime;
+}
+
+void processCursorPos(Scene *scene, const double xPos, const double yPos) {
+    static double lastXPos = xPos;
+    static double lastYPos = yPos;
+
+    const double deltaX = lastXPos - xPos;
+    const double deltaY = lastYPos - yPos;
+
+    scene->look((float) deltaX, (float) deltaY);
+
+    lastXPos = xPos;
+    lastYPos = yPos;
 }
