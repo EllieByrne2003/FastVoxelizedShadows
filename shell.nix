@@ -17,5 +17,7 @@ pkgs.mkShell {
         nlohmann_json
         gpu-screen-recorder-gtk
         pavucontrol
+
+        renderdoc
     ];
 }
