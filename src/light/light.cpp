@@ -30,8 +30,8 @@ Light * Light::readLight(const json &jsonLight) {
     }
 
     std::istringstream positionStr(jsonLight["position"].get<std::string>());
-    std::istringstream directionStr(jsonLight["position"].get<std::string>());
-    std::istringstream colourStr(jsonLight["position"].get<std::string>());
+    std::istringstream directionStr(jsonLight["direction"].get<std::string>());
+    std::istringstream colourStr(jsonLight["colour"].get<std::string>());
 
     float x, y, z;
 
@@ -53,10 +53,19 @@ Light * Light::readLight(const json &jsonLight) {
     return new Light(position, direction, colour, intensity);
 }
 
-mat4 Light::get_view_matrix() const {
-    // TODO has to be better way, maybe move this into space
-    const vec3 right = glm::normalize(glm::cross(direction, vec3(0.0f, 1.0f, 0.0f)));
-    const vec3 up    = glm::normalize(glm::cross(right, direction));
+#include <iostream>
+mat4 Light::getView() const {
+    // std::cout << position.x << std::endl;
+    // std::cout << position.y << std::endl;
+    // std::cout << position.z << std::endl;
+    // std::cout << direction.x << std::endl;
+    // std::cout << direction.y << std::endl;
+    // std::cout << direction.z << std::endl << std::endl;
+
+    vec3 up = vec3(0.0f, 1.0f, 0.0f);
+    if (glm::abs(glm::dot(direction, up)) > 0.999f) {
+        up = glm::vec3(0.0f, 0.0f, 1.0f);
+    }
 
     return glm::lookAt(position, position + direction, up);
 }

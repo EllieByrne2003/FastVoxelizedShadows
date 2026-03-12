@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 using namespace glm;
 
@@ -24,7 +25,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-    GLFWwindow *window = glfwCreateWindow(1920, 1080, "Test", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(1024, 1024, "Test", nullptr, nullptr);
     if(!window) {
         std::cerr << "Failed to create GLFWwindow." << std::endl;
         glfwTerminate();
@@ -49,13 +50,10 @@ int main() {
         return -1;
     }
 
-    // scene->setupLights(false); // TODO should be true, this should be called each frame
+    glEnable(GL_DEPTH_TEST);
+    scene->setupLights(false); // TODO should be true, this should be called each frame
 
-    // Renderer &renderer = Renderer::getInstance();
-    // renderer.setView(mat4(1.0f));
-    // renderer.setProj(mat4(1.0f));
-
-    const mat4 projection = glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
+    const mat4 projection = glm::perspective(glm::radians(45.0f), 1024.0f / 1024.0f, 0.1f, 100.0f);
     // Renderer::getInstance().setProj(projection);
     
     glEnable(GL_DEPTH_TEST);

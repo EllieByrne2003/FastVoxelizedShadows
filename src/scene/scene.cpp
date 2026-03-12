@@ -77,25 +77,26 @@ Scene * Scene::readScene(const std::string &sceneName) {
 }
 
 void Scene::draw() {
-    Renderer::getInstance().setView(camera.get_view_matrix());
+    camera.setViewPort(); // Sets the viewport to the size of the scenes camera
 
     for(Model *model : models) {
         model->draw(this);
     }
 }
 
-void Scene::drawDepths(const bool drawEntry) {
+void Scene::drawDepths(const Light *const light, const bool drawEntry) {
     for(Model *model : models) {
-        model->drawDepths(this, drawEntry);
+        model->drawDepths(this, light, drawEntry);
     }
 }
+
 void Scene::setupLights(const bool voxelize) {
     // TODO do this, for now just bodge it
 
     Renderer &renderer = Renderer::getInstance();
 
     // Create texture, bind to view buffer later
-    Texture *depth = Texture::createTexture(1024, 1024, 1);
+    Texture *depth = Texture::createTexture(16*1024, 16*1024, 1);
 
     GLuint depthMapFBO;
     glGenFramebuffers(1, &depthMapFBO);
@@ -114,24 +115,26 @@ void Scene::setupLights(const bool voxelize) {
         // std::cerr << "Something wrong with depths" << std::endl;
     }
 
-    // Unbind the FBO for now
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // // Unbind the FBO for now
+    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // Take first light, setup renderer
     const Light *const light = lights[0];
-    renderer.setView(light->get_view_matrix());
-    renderer.setProj(glm::ortho(0.0f, 1024.0f, 0.0f, 1024.0f, 0.1f, 1000.0f)); // TODO figure out proper values
+    renderer.setView(light->getView());
+    renderer.setProj(glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.0f, 20.0f)); // TODO figure out proper values
 
 
-    glViewport(0, 0, 1024, 1024);   // width/height = depth texture dimensions
+    glViewport(0, 0, 16*1024, 16*1024);   // width/height = depth texture dimensions
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
 
     // Draw depths
-    this->drawDepths(true);
+    this->drawDepths(lights[0], true);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     depth->bind(1);
+
+    glViewport(0, 0, 1024, 1024);   // width/height = depth texture dimensions
 
 
     // float *entryDepths = new float[1024 * 1024 * 4];
@@ -174,24 +177,44 @@ void Scene::addLight(Light *light) {
 
 void Scene::move(const Direction direction, const float time) {
     camera.move(direction, time);
-
-    Renderer::getInstance().setView(camera.get_view_matrix());
 }
 
 void Scene::look(const float deltaX, const float deltaY) {
     camera.look(deltaX, deltaY);
+}
 
-    Renderer::getInstance().setView(camera.get_view_matrix());
+void Scene::resizeView(const int width, const int height) {
+    camera.resizeView(width, height);
+}
+
+mat4 Scene::getView() const {
+    return camera.getView();
+}
+
+mat4 Scene::getProj() const {
+    return camera.getProj();
+}
+
+// TODO should return a projection to include all visible (to the light) vertices
+mat4 Scene::getProj(const Light *const light) const {
+    return glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 20.0f);
 }
 
 vec3 Scene::getCameraPos() const {
     return camera.getPos();
 }
 
+// #include <iostream>
+
 // TODO temporary
 mat4 Scene::getLightMatrix() const {
-    const mat4 proj = glm::ortho(0.0f, 1024.0f, 0.0f, 1024.0f, 0.1f, 1000.0f);
-    const mat4 view = lights[0]->get_view_matrix();
+    // std::cout << "lights: " << lights.size() << std::endl;
+    const mat4 proj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 20.0f);
+    // const mat4 proj = glm::perspective(glm::radians(45.0f), 1024.0f / 1024.0f, 0.1f, 100.0f);
+    const mat4 view = lights[0]->getView();
+
+    // std::cout << proj[0][0] << std::endl;
+    // std::cout << view[0][0] << std::endl << std::endl;
 
     return proj * view;
 }

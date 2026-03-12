@@ -25,7 +25,7 @@ public:
 
     static Light * readLight(const json &jsonLight);
 
-    mat4 get_view_matrix() const;
+    mat4 getView() const;
 
     void setDepthMapIndex(const int depthMapIndex);
 };

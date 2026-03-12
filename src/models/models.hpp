@@ -13,11 +13,13 @@ using json = nlohmann::json;
 
 typedef unsigned int GLuint;
 
+class DepthShader;
 class Animation;
 class Renderer;
 class Texture;
 class Shader;
 class Scene;
+class Light;
 class Mesh;
 
 class Model {
@@ -88,7 +90,7 @@ public:
     // virtual void setShader(const std::shared_ptr<Shader> &shader) = 0;
 
     virtual void draw(const Scene *const scene, const mat4 &parentModel = mat4(1.0f)) const = 0;
-    virtual void drawDepths(const Scene *const scene, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const = 0;
+    virtual void drawDepths(const Scene *const scene, const Light *const light, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const = 0; // TODO pass light proj since it should be made once for whole scene
     // virtual void draw() const = 0;
 };
 
@@ -98,13 +100,13 @@ private:
 
     const Texture *texture;
 
-    const Shader *shader;
-    const Shader *shadowShader;
+    const Shader      *shader;
+    const DepthShader *depthShader;
 
 protected:
 
 public:
-    MeshModel(const vec3 &position, const vec3 &rotation, const vec3 &scale, const Shader *shader, const Shader *shadowShader, const Mesh *mesh, const Texture *texture);
+    MeshModel(const vec3 &position, const vec3 &rotation, const vec3 &scale, const Shader *shader, const DepthShader *depthShader, const Mesh *mesh, const Texture *texture);
     ~MeshModel() override;
 
     // Overriden functions
@@ -116,7 +118,7 @@ public:
     void update(const float deltaTime) override final;
 
     void draw(const Scene *const scene, const mat4 &parentModel = mat4(1.0f)) const override final;
-    void drawDepths(const Scene *const scene, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
+    void drawDepths(const Scene *const scene, const Light *const light, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
 
     // Class specific functions
     void bindShader() const;
@@ -141,7 +143,7 @@ public:
     virtual void update(const float deltaTime) final;
 
     void draw(const Scene *const scene, const mat4 &parentModel = mat4(1.0f)) const override final;
-    void drawDepths(const Scene *const scene, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
+    void drawDepths(const Scene *const scene, const Light *const light, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
 
     // Class specific functions
     void addModel(Model *model);
