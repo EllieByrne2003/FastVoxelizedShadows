@@ -11,11 +11,37 @@
             "texture": "moonnormal.jpg",
 
             "shader": {
+                "type": "shadowSampler",
                 "vertex": "simpleShadow/vertex.glsl",
                 "fragment": "simpleShadow/fragment.glsl"
             },
 
-            "shadowShader": {
+            "depthShader": {
+                "type": "depth",
+                "vertex": "depth/vertex.glsl",
+                "fragment": "depth/fragment.glsl"
+            },
+
+            "animations": [
+
+            ]
+        },
+        {
+            "position": "5 0 5",
+            "rotation": "0 0 0",
+            "scale": "1 1 1",
+
+            "mesh": "teapot.obj",
+            "texture": "moonnormal.jpg",
+
+            "shader": {
+                "type": "shadowSampler",
+                "vertex": "simpleShadow/vertex.glsl",
+                "fragment": "simpleShadow/fragment.glsl"
+            },
+
+            "depthShader": {
+                "type": "depth",
                 "vertex": "depth/vertex.glsl",
                 "fragment": "depth/fragment.glsl"
             },
@@ -27,7 +53,7 @@
     ],
     "lights": [
         {
-            "position": "0 100 100",
+            "position": "0 10 10",
             "direction": "0 -1 -1",
             "colour": "0 1 0",
             "intensity": 1.0
