@@ -69,7 +69,7 @@ Model * Model::readModel(const json &jsonModel) {
             return nullptr;
         }
 
-        if(!jsonModel.contains("shadowShader")) {
+        if(!jsonModel.contains("depthShader")) {
             return nullptr;
         }
 
@@ -78,8 +78,8 @@ Model * Model::readModel(const json &jsonModel) {
             return nullptr;
         }
 
-        Shader *shadowShader = Shader::readShader(jsonModel["shadowShader"]);
-        if(shadowShader == nullptr) {
+        DepthShader *depthShader = DepthShader::readShader(jsonModel["depthShader"]);
+        if(depthShader == nullptr) {
             delete shader;
 
             return nullptr;
@@ -88,7 +88,7 @@ Model * Model::readModel(const json &jsonModel) {
         Mesh *mesh = Mesh::readMesh(jsonModel["mesh"]);
         if(mesh == nullptr) {
             delete shader;
-            delete shadowShader;
+            delete depthShader;
 
             return nullptr;
         }
@@ -96,7 +96,7 @@ Model * Model::readModel(const json &jsonModel) {
         Texture *texture = Texture::readTexture(jsonModel["texture"]);
         if(texture == nullptr) {
             delete shader;
-            delete shadowShader;
+            delete depthShader;
             delete mesh;
 
             return nullptr;
@@ -112,7 +112,7 @@ Model * Model::readModel(const json &jsonModel) {
         //     return nullptr;
         // }
 
-        model = new MeshModel(position, rotation, scale, shader, shadowShader, mesh, texture);
+        model = new MeshModel(position, rotation, scale, shader, depthShader, mesh, texture);
     } else if(jsonModel.contains("models")) {
         model = new CompositeModel(position, rotation, scale);
 

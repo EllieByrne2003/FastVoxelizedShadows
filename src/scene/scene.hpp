@@ -29,7 +29,7 @@ public:
     static Scene * readScene(const std::string &sceneName);
 
     void draw();
-    void drawDepths(const bool drawEntry);
+    void drawDepths(const Light *const light, const bool drawEntry);
 
     void setupLights(const bool voxelize);
 
@@ -38,6 +38,12 @@ public:
 
     void move(const Direction direction, const float time);
     void look(const float deltaX, const float deltaY);
+    void resizeView(const int width, const int height);
+
+    mat4 getView() const;
+    mat4 getProj() const;
+
+    mat4 getProj(const Light *const light) const;
 
     vec3 getCameraPos() const;
 

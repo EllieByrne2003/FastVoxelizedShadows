@@ -7,9 +7,10 @@
 #include "../renderer/renderer.hpp"
 #include "../shaders/shaders.hpp"
 #include "../texture/texture.hpp"
+#include "../scene/scene.hpp"
 #include "../mesh/mesh.hpp"
 
-MeshModel::MeshModel(const vec3 &position, const vec3 &rotation, const vec3 &scale, const Shader *shader, const Shader *shadowShader, const Mesh *mesh, const Texture *texture) :
+MeshModel::MeshModel(const vec3 &position, const vec3 &rotation, const vec3 &scale, const Shader *shader, const DepthShader *depthShader, const Mesh *mesh, const Texture *texture) :
     Model(position, rotation, scale)
 {
     this->mesh = mesh;
@@ -17,7 +18,7 @@ MeshModel::MeshModel(const vec3 &position, const vec3 &rotation, const vec3 &sca
     this->texture = texture;
 
     this->shader = shader;
-    this->shadowShader = shadowShader;
+    this->depthShader = depthShader;
 }
 
 // TODO have some null checking here
@@ -27,7 +28,7 @@ MeshModel::~MeshModel() {
     delete texture;
 
     delete shader;
-    delete shadowShader;
+    delete depthShader;
 }
 
 bool MeshModel::isStatic() const {
@@ -71,42 +72,35 @@ void MeshModel::update(const float deltaTime) {
 }
 
 void MeshModel::draw(const Scene *const scene, const mat4 &parentModel) const {
-    const Renderer &renderer = Renderer::getInstance();
-
     // Create model matrix and combine with parentModel matrix then make mvp
     const mat4 localModel = createLocalModelMatrix();
     const mat4 trueModel = parentModel * localModel;
-    const mat4 mvp = renderer.getMVP(trueModel);
 
     // Bind the shader and setup the uniforms
     shader->bind();
-    shader->passMVP(mvp); // TODO this can be done in model uniform function
     shader->passShaderUniforms();
     shader->passModelUniforms(this, trueModel);
-    // shader->passSceneUniforms(scene);
+    shader->passSceneUniforms(scene);
 
     // Bind textures, normal maps, etc if present
     // TODO implement above
-    texture->bind(0);
+    // texture->bind(0);
 
     // draw mesh
     mesh->draw();
 }
 
-void MeshModel::drawDepths(const Scene *const scene, const bool drawEntry, const mat4 &parentModel) const {
-    const Renderer &renderer = Renderer::getInstance();
-
+void MeshModel::drawDepths(const Scene *const scene, const Light *const light, const bool drawEntry, const mat4 &parentModel) const {
     // Create model matrix and combine with parentModel matrix then make mvp
     const mat4 localModel = createLocalModelMatrix();
     const mat4 trueModel = parentModel * localModel;
-    const mat4 mvp = renderer.getMVP(trueModel);
 
     // Bind the shader, textures, normal maps etc
-    shadowShader->bind();
-    shadowShader->passMVP(mvp);
-    shadowShader->passShaderUniforms();
-    shadowShader->passModelUniforms(this, trueModel);
-    shader->passSceneUniforms(scene);
+    depthShader->bind();
+    depthShader->passShaderUniforms();
+    depthShader->passModelUniforms(this, trueModel);
+    depthShader->passSceneUniforms(scene);
+    depthShader->passLightUniforms(light, scene->getProj(light));
 
     // draw mesh
     mesh->draw();
