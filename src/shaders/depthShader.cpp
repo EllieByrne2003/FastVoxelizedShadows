@@ -67,7 +67,7 @@ void DepthShader::passShaderUniforms() const {
 
 }
 
-void DepthShader::passModelUniforms(const Model *const model, const mat4 &trueMatrix) const {
+void DepthShader::passModelUniforms(const MeshModel *const model, const mat4 &trueMatrix) const {
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &trueMatrix[0][0]);
 }
 
@@ -75,8 +75,9 @@ void DepthShader::passSceneUniforms(const Scene *const scene) const {
     // Nothing to do here
 }
 
-void DepthShader::passLightUniforms(const Light *const light, const mat4 &proj) const {
-    const mat4 view = light->getView();
+void DepthShader::passLightUniforms(const Light &light, const mat4 &proj) const {
+    const mat4 view = light.getView();
+    // TODO can just get both the view and proj as one lightSpace matrix
 
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, &proj[0][0]);

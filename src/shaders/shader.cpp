@@ -87,21 +87,21 @@ void Shader::passShaderUniforms() const {
 
 }
 
-void Shader::passModelUniforms(const Model *const model, const mat4 &trueMatrix) const {
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &trueMatrix[0][0]);
-}
+// void Shader::passModelUniforms(const Model *const model, const mat4 &trueMatrix) const {
+//     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &trueMatrix[0][0]);
+// }
 
-void Shader::passSceneUniforms(const Scene *const scene) const {
-    const mat4 view = scene->getView();
-    const mat4 proj = scene->getProj();
+// void Shader::passSceneUniforms(const Scene *const scene) const {
+    // const mat4 view = scene->getView();
+    // const mat4 proj = scene->getProj();
 
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-    glUniformMatrix4fv(projLoc, 1, GL_FALSE, &proj[0][0]);
+    // glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+    // glUniformMatrix4fv(projLoc, 1, GL_FALSE, &proj[0][0]);
 
-    // Pass light data
-    // TODO this should be in a subclass of shadow shader
-    const mat4 lightMat = scene->getLightMatrix();
+    // // Pass light data
+    // // TODO this should be in a subclass of shadow shader
+    // const mat4 lightMat = scene->getLightMatrix();
 
-    glUniformMatrix4fv(glGetUniformLocation(*id, "lightSpaceMatrix"), 1, GL_FALSE, &lightMat[0][0]);
-    // glUniform3fv(glGetUniformLocation(*id, "cameraPos"), 1, &scene->getCameraPos()[0]);
-}
+    // glUniformMatrix4fv(glGetUniformLocation(*id, "lightSpaceMatrix"), 1, GL_FALSE, &lightMat[0][0]);
+    // // glUniform3fv(glGetUniformLocation(*id, "cameraPos"), 1, &scene->getCameraPos()[0]);
+// }

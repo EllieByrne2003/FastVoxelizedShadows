@@ -8,13 +8,20 @@
 #include <GL/gl.h>
 
 #include "../scene/scene.hpp"
+#include "../models/models.hpp"
 
 #include "../utils/utils.hpp"
 
 #define SHADER_DIR std::string("res/shaders")
 
+#define DEPTHMAP_SLOT 1
+
 ShadowSampleShader::ShadowSampleShader(const std::shared_ptr<const GLuint> &id) : Shader(id) {
-    lightSpaceMatrixLoc = glGetUniformLocation(*id, "lightSpaceMatrix");
+    lightCountLoc = glGetUniformLocation(*id, "lightCount");
+    depthMapsLoc  = glGetUniformLocation(*id, "depthMaps");
+    cameraPosLoc  = glGetUniformLocation(*id, "cameraPos");
+
+    textureMapLoc  = glGetUniformLocation(*id, "textureMap");
 }
 
 ShadowSampleShader::~ShadowSampleShader() {
@@ -67,17 +74,23 @@ void ShadowSampleShader::passShaderUniforms() const {
 
 }
 
-void ShadowSampleShader::passModelUniforms(const Model *const model, const mat4 &trueMatrix) const {
+void ShadowSampleShader::passModelUniforms(const MeshModel *const model, const mat4 &trueMatrix) const {
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &trueMatrix[0][0]);
+
+    model->bindTexture(textureMapLoc);
 }
 
 void ShadowSampleShader::passSceneUniforms(const Scene *const scene) const {
     const mat4 view = scene->getView();
     const mat4 proj = scene->getProj();
 
-    const mat4 lightSpaceMatrix = scene->getLightMatrix();
+    const vec3 cameraPos = scene->getCameraPos();
 
-    glUniformMatrix4fv(viewLoc,             1, GL_FALSE, &view[0][0]);
-    glUniformMatrix4fv(projLoc,             1, GL_FALSE, &proj[0][0]);
-    glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, &lightSpaceMatrix[0][0]);
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, &proj[0][0]);
+
+    glUniform3f(cameraPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
+
+    scene->bindLights(lightCountLoc);
+    scene->bindDepthMaps(depthMapsLoc, DEPTHMAP_SLOT);
 }

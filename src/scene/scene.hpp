@@ -5,10 +5,14 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#include "../light/light.hpp"
 #include "../camera/camera.hpp"
 
 class Model;
 class Light;
+class TextureArray;
+
+typedef unsigned int GLuint;
 
 class Scene {
 private:
@@ -16,9 +20,14 @@ private:
     std::string description;
 
     std::vector<Model *> models;
-    std::vector<Light *> lights;
+    std::vector<Light> lights;
 
     Camera camera; // TODO add this to reading scenes
+
+    GLuint FBO;
+    GLuint lightsSSBO;
+    TextureArray *depthMaps = nullptr;
+    
 protected:
 
 public:
@@ -29,7 +38,7 @@ public:
     static Scene * readScene(const std::string &sceneName);
 
     void draw();
-    void drawDepths(const Light *const light, const bool drawEntry);
+    void drawDepths(const Light &light, const bool drawEntry);
 
     void setupLights(const bool voxelize);
 
@@ -43,10 +52,13 @@ public:
     mat4 getView() const;
     mat4 getProj() const;
 
-    mat4 getProj(const Light *const light) const;
+    mat4 getProj(const Light &light) const;
 
     vec3 getCameraPos() const;
 
     // TODO temporary
     mat4 getLightMatrix() const;
+
+    void bindLights(const GLuint lightCountLoc) const;
+    void bindDepthMaps(const GLuint depthmapsLoc, const int slot) const;
 };

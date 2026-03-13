@@ -9,6 +9,8 @@ using json = nlohmann::json;
 class Light {
 private:
     // Alignment is important for SSBO
+    mat4 lightSpaceMatrix alignas(sizeof(vec4));
+
     const vec3 position  alignas(sizeof(vec4));
     const vec3 direction alignas(sizeof(vec4));
     const vec3 colour    alignas(sizeof(vec4));
@@ -28,4 +30,7 @@ public:
     mat4 getView() const;
 
     void setDepthMapIndex(const int depthMapIndex);
+
+    void setLightSpaceMatrix(const mat4 &proj);
+    mat4 getLightSpaceMatrix() const;
 };

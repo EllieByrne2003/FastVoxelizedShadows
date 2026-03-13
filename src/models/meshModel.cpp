@@ -90,7 +90,7 @@ void MeshModel::draw(const Scene *const scene, const mat4 &parentModel) const {
     mesh->draw();
 }
 
-void MeshModel::drawDepths(const Scene *const scene, const Light *const light, const bool drawEntry, const mat4 &parentModel) const {
+void MeshModel::drawDepths(const Scene *const scene, const Light &light, const bool drawEntry, const mat4 &parentModel) const {
     // Create model matrix and combine with parentModel matrix then make mvp
     const mat4 localModel = createLocalModelMatrix();
     const mat4 trueModel = parentModel * localModel;
@@ -104,4 +104,8 @@ void MeshModel::drawDepths(const Scene *const scene, const Light *const light, c
 
     // draw mesh
     mesh->draw();
+}
+
+void MeshModel::bindTexture(const GLuint loc) const {
+    texture->bind(loc, 0); // TODO accept slot as parameter
 }

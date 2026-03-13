@@ -10,12 +10,16 @@
 #include "../models/models.hpp"
 #include "../texture/texture.hpp"
 #include "../renderer/renderer.hpp"
+#include "../textureArray/textureArray.hpp"
 
 #define SCENE_DIR std::string("res/scenes")
 
 Scene::Scene(const std::string &name, const std::string &description) {
     this->name = name;
     this->description = description;
+
+    glGenFramebuffers(1, &FBO);
+    glGenBuffers(1, &lightsSSBO);
 }
 
 Scene::~Scene() {
@@ -23,8 +27,15 @@ Scene::~Scene() {
         delete model;
     }
 
-    for(Light *light : lights) {
-        delete light;
+    // for(Light *light : lights) {
+    //     delete light;
+    // }
+
+    glDeleteFramebuffers(1, &FBO);
+    glDeleteBuffers(1, &lightsSSBO);
+    
+    if(depthMaps != nullptr) {
+        delete depthMaps;
     }
 }
 
@@ -84,87 +95,93 @@ void Scene::draw() {
     }
 }
 
-void Scene::drawDepths(const Light *const light, const bool drawEntry) {
+void Scene::drawDepths(const Light &light, const bool drawEntry) {
+    // glEnable(GL_CULL_FACE);
+    // glCullFace(GL_FRONT);
+
     for(Model *model : models) {
         model->drawDepths(this, light, drawEntry);
     }
+
+    // glCullFace(GL_BACK);
+    // glDisable(GL_CULL_FACE);
 }
 
 void Scene::setupLights(const bool voxelize) {
     // TODO do this, for now just bodge it
 
-    Renderer &renderer = Renderer::getInstance();
+    // Renderer &renderer = Renderer::getInstance();
 
-    // Create texture, bind to view buffer later
-    Texture *depth = Texture::createTexture(16*1024, 16*1024, 1);
+    // // Create texture, bind to view buffer later
+    // Texture *depth = Texture::createTexture(16*1024, 16*1024, 1);
 
-    GLuint depthMapFBO;
-    glGenFramebuffers(1, &depthMapFBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    // GLuint depthMapFBO;
+    // glGenFramebuffers(1, &depthMapFBO);
+    // glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 
-    // Attach the depth texture to the FBO
-    depth->bindToFrameBuffer();
+    // // Attach the depth texture to the FBO
+    // depth->bindToFrameBuffer();
 
-    // Explicitly tell OpenGL that we will not render any color data
+    // // Explicitly tell OpenGL that we will not render any color data
+    // glDrawBuffer(GL_NONE);
+    // glReadBuffer(GL_NONE);
+
+    // // Check if the framebuffer is complete
+    // if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    //     // Handle error
+    //     // std::cerr << "Something wrong with depths" << std::endl;
+    // }
+
+    // // // Unbind the FBO for now
+    // // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // // Take first light, setup renderer
+    // const Light *const light = lights[0];
+    // renderer.setView(light->getView());
+    // renderer.setProj(glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.0f, 20.0f)); // TODO figure out proper values
+
+
+    // glViewport(0, 0, 16*1024, 16*1024);   // width/height = depth texture dimensions
+    // glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    // glClear(GL_DEPTH_BUFFER_BIT);
+
+    // // Draw depths
+    // this->drawDepths(lights[0], true);
+
+    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // depth->bind(1);
+
+    // glViewport(0, 0, 1024, 1024);   // width/height = depth texture dimensions
+
+
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
-    // Check if the framebuffer is complete
+    glViewport(0, 0, 16*1024, 16*1024);
+
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        // Handle error
-        // std::cerr << "Something wrong with depths" << std::endl;
+        // TODO error needs handling
     }
 
-    // // Unbind the FBO for now
-    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    for(int i = 0; i < lights.size(); i++) {
+        Light &light = lights[i];
+        light.setLightSpaceMatrix(getProj(light));
 
-    // Take first light, setup renderer
-    const Light *const light = lights[0];
-    renderer.setView(light->getView());
-    renderer.setProj(glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.0f, 20.0f)); // TODO figure out proper values
+        depthMaps->bindToFrameBuffer(i);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
+        this->drawDepths(light, true);
 
-    glViewport(0, 0, 16*1024, 16*1024);   // width/height = depth texture dimensions
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glClear(GL_DEPTH_BUFFER_BIT);
+        if(voxelize) {
+            // TODO implement
+        } else {
 
-    // Draw depths
-    this->drawDepths(lights[0], true);
+        }
+    }
 
+    glViewport(0, 0, 1024, 1024);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    depth->bind(1);
-
-    glViewport(0, 0, 1024, 1024);   // width/height = depth texture dimensions
-
-
-    // float *entryDepths = new float[1024 * 1024 * 4];
-    // glReadPixels(0, 0, 1024, 1024, GL_DEPTH_COMPONENT, GL_FLOAT, entryDepths);
-
-    // stbi_write_bmp("depth.bmp", 1024, 1024, 4, entryDepths);
-
-    // // Bind texture to slot 1
-    // // depth->unbindFromFrameBuffer(); // TODO preserve width and height?
-    // depth->bind(1);
-
-    if(voxelize) {
-        // Spin up some threads (max of like 8 or something)
-
-        // Create texture for entry and exit
-
-        // Draw entry depths
-
-        // Draw exit depths
-
-        // Recover data
-
-        // Process it
-    } else {
-        // Make texture array big enough for all lights
-
-        // For each light assign index, draw shadows to it
-
-        // 
-    }
 }
 
 void Scene::addModel(Model *model) {
@@ -172,7 +189,17 @@ void Scene::addModel(Model *model) {
 }
 
 void Scene::addLight(Light *light) {
-    lights.push_back(light);
+    light->setDepthMapIndex(lights.size());
+    lights.push_back(*light);
+
+    delete light;
+
+    // Make new texture array for lights
+    if(depthMaps != nullptr) {
+        delete depthMaps;
+    }
+
+    depthMaps = TextureArray::createTexture(lights.size(), 16*1024, 16*1024, 1);
 }
 
 void Scene::move(const Direction direction, const float time) {
@@ -196,7 +223,7 @@ mat4 Scene::getProj() const {
 }
 
 // TODO should return a projection to include all visible (to the light) vertices
-mat4 Scene::getProj(const Light *const light) const {
+mat4 Scene::getProj(const Light &light) const {
     return glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 20.0f);
 }
 
@@ -211,10 +238,24 @@ mat4 Scene::getLightMatrix() const {
     // std::cout << "lights: " << lights.size() << std::endl;
     const mat4 proj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 20.0f);
     // const mat4 proj = glm::perspective(glm::radians(45.0f), 1024.0f / 1024.0f, 0.1f, 100.0f);
-    const mat4 view = lights[0]->getView();
+    const mat4 view = lights[0].getView();
 
     // std::cout << proj[0][0] << std::endl;
     // std::cout << view[0][0] << std::endl << std::endl;
 
     return proj * view;
+}
+
+void Scene::bindLights(const GLuint lightCountLoc) const {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightsSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, lights.size() * sizeof(Light), lights.data(), GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, lightsSSBO); // TODO let shaders choose own buffer
+
+    glUniform1i(lightCountLoc, lights.size());
+}
+
+void Scene::bindDepthMaps(const GLuint depthmapsLoc, const int slot) const {
+    if(depthMaps != nullptr) {
+        depthMaps->bind(depthmapsLoc, slot);
+    }
 }

@@ -24,7 +24,7 @@ public:
 
     static Texture * createTexture(const int width, const int height, const int nChannels);
 
-    void bind(const int slot) const;
+    void bind(const GLuint loc, const int slot) const;
     void bindToFrameBuffer() const;
     void unbindFromFrameBuffer() const;
 

@@ -90,7 +90,7 @@ public:
     // virtual void setShader(const std::shared_ptr<Shader> &shader) = 0;
 
     virtual void draw(const Scene *const scene, const mat4 &parentModel = mat4(1.0f)) const = 0;
-    virtual void drawDepths(const Scene *const scene, const Light *const light, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const = 0; // TODO pass light proj since it should be made once for whole scene
+    virtual void drawDepths(const Scene *const scene, const Light &light, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const = 0; // TODO pass light proj since it should be made once for whole scene
     // virtual void draw() const = 0;
 };
 
@@ -118,10 +118,11 @@ public:
     void update(const float deltaTime) override final;
 
     void draw(const Scene *const scene, const mat4 &parentModel = mat4(1.0f)) const override final;
-    void drawDepths(const Scene *const scene, const Light *const light, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
+    void drawDepths(const Scene *const scene, const Light &light, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
 
     // Class specific functions
-    void bindShader() const;
+    // void bindShader() const;
+    void bindTexture(const GLuint loc) const;
 };
 
 class CompositeModel : public Model {
@@ -143,7 +144,7 @@ public:
     virtual void update(const float deltaTime) final;
 
     void draw(const Scene *const scene, const mat4 &parentModel = mat4(1.0f)) const override final;
-    void drawDepths(const Scene *const scene, const Light *const light, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
+    void drawDepths(const Scene *const scene, const Light &light, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
 
     // Class specific functions
     void addModel(Model *model);

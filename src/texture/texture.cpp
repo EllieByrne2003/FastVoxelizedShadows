@@ -94,10 +94,11 @@ Texture * Texture::createTexture(const int width, const int height, const int nC
     return new Texture(ID, width, height, nChannels);
 }
 
-void Texture::bind(const int slot) const {
+void Texture::bind(const GLuint loc, const int slot) const {
     // TODO bounds check, slot must be > 0 and < GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, *id);
+    glUniform1i(loc, slot);
 }
 
 void Texture::bindToFrameBuffer() const {
