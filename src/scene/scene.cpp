@@ -195,9 +195,29 @@ mat4 Scene::getProj() const {
     return camera.getProj();
 }
 
+#include <iostream>
+
 // TODO should return a projection to include all visible (to the light) vertices
 mat4 Scene::getProj(const Light *const light) const {
-    return glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 20.0f);
+    // float left = 0.0f, right = 0.0f, bottom = 0.0f, top = 0.0f, far = 0.0f;
+
+
+    float left   = std::numeric_limits<float>::max();
+    float right  = std::numeric_limits<float>::lowest();
+    float bottom = std::numeric_limits<float>::max();
+    float top    = std::numeric_limits<float>::lowest();
+    // float back   = std::numeric_limits<float>::max();
+    float far  = std::numeric_limits<float>::lowest();
+
+    // We need to iterate through all model
+    for(const Model *const model : models) {
+        model->expandBounds(light->getView(), left, right, bottom, top, far);
+    }
+
+    std::cout << "left: " << left << " right: " << right << " bottom: " << bottom << " top: " << top << " far: " << far << std::endl; 
+
+    // return glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 20.0f);
+    return glm::ortho(left, right, bottom, top, 0.1f, far);
 }
 
 vec3 Scene::getCameraPos() const {
@@ -209,7 +229,10 @@ vec3 Scene::getCameraPos() const {
 // TODO temporary
 mat4 Scene::getLightMatrix() const {
     // std::cout << "lights: " << lights.size() << std::endl;
-    const mat4 proj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 20.0f);
+    // const mat4 proj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 20.0f);
+
+    const mat4 proj = getProj(lights[0]);
+
     // const mat4 proj = glm::perspective(glm::radians(45.0f), 1024.0f / 1024.0f, 0.1f, 100.0f);
     const mat4 view = lights[0]->getView();
 
