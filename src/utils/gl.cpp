@@ -22,3 +22,8 @@ void deleteShaderProgram(GLuint *shaderProgram) {
     glDeleteProgram(*shaderProgram);
     delete shaderProgram;
 }
+
+void deleteFrameBuffer(GLuint *frameBuffer) {
+    glDeleteFramebuffers(1, frameBuffer);
+    delete frameBuffer;
+}

@@ -18,3 +18,4 @@ void deleteVertexArrays(GLuint *array);
 void deleteBuffer(GLuint *buffer);
 void deleteTexture(GLuint *texture);
 void deleteShaderProgram(GLuint *shaderProgram);
+void deleteFrameBuffer(GLuint *frameBuffer);
