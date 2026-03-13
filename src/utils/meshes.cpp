@@ -29,7 +29,7 @@ struct Vertex {
     }
 };
 
-int readOBJ(const std::string &filepath, GLuint &VAO, GLuint &VBO, GLuint &EBO) {
+int readOBJ(const std::string &filepath, GLuint &VAO, GLuint &VBO, GLuint &EBO, Bounds &bounds) {
     std::ifstream file(filepath);
     if(!file.is_open()) {
         return 0; // TODO make this return a default object
@@ -51,6 +51,24 @@ int readOBJ(const std::string &filepath, GLuint &VAO, GLuint &VBO, GLuint &EBO) 
         if(type == "v") {
             float x, y, z;
             iss >> x >> y >> z;
+
+            if(x < bounds.left) {
+                bounds.left = x;
+            } else if(x > bounds.right) {
+                bounds.right = x;
+            }
+
+            if(y < bounds.bottom) {
+                bounds.bottom = y;
+            } else if(y > bounds.top) {
+                bounds.top = y;
+            }
+
+            if(z < bounds.back) {
+                bounds.back = z;
+            } else if(z > bounds.front) {
+                bounds.front = z;
+            }
 
             positions.push_back(vec3(x, y, z));
         } else if(type == "vn") {
