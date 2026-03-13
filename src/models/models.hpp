@@ -11,6 +11,8 @@ using namespace glm;
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#include "../bounds/bounds.hpp"
+
 typedef unsigned int GLuint;
 
 class DepthShader;
@@ -93,7 +95,7 @@ public:
     virtual void drawDepths(const Scene *const scene, const Light &light, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const = 0; // TODO pass light proj since it should be made once for whole scene
     // virtual void draw() const = 0;
 
-    virtual void expandBounds(const mat4 &view, float &left, float &right, float &bottom, float &up, float &far, const mat4 &parentModel = mat4(1.0f)) const = 0;
+    virtual void expandBounds(Bounds &bounds, const mat4 &view, const mat4 &proj, const mat4 &parentModel = mat4(1.0f)) const = 0;
 };
 
 class MeshModel : public Model {
@@ -122,7 +124,7 @@ public:
     void draw(const Scene *const scene, const mat4 &parentModel = mat4(1.0f)) const override final;
     void drawDepths(const Scene *const scene, const Light &light, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
 
-    void expandBounds(const mat4 &view, float &left, float &right, float &bottom, float &up, float &far, const mat4 &parentModel = mat4(1.0f)) const override final;
+    void expandBounds(Bounds &bounds, const mat4 &view, const mat4 &proj, const mat4 &parentModel = mat4(1.0f)) const override final;
 
     // Class specific functions
     // void bindShader() const;
@@ -150,7 +152,7 @@ public:
     void draw(const Scene *const scene, const mat4 &parentModel = mat4(1.0f)) const override final;
     void drawDepths(const Scene *const scene, const Light &light, const bool drawEntry, const mat4 &parentModel = mat4(1.0f)) const override final;
 
-    void expandBounds(const mat4 &view, float &left, float &right, float &bottom, float &up, float &far, const mat4 &parentModel = mat4(1.0f)) const override final;
+    void expandBounds(Bounds &bounds, const mat4 &view, const mat4 &proj, const mat4 &parentModel = mat4(1.0f)) const override final;
 
     // Class specific functions
     void addModel(Model *model);

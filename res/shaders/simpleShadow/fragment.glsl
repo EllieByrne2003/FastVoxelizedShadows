@@ -5,7 +5,6 @@ const int MAX_LIGHTS = 256;
 in vec4 FragPos;
 in vec3 Normal;
 in vec2 TexCoords;
-// in vec4 FragPosLightSpace;
 
 struct Light {
     mat4  lightSpaceMatrix;   // 64 bytes
@@ -13,7 +12,9 @@ struct Light {
     vec3  direction;          // 16 bytes
     vec3  colour;             // 16 bytes
     float intensity;          //  4 bytes
+    float coneAngle;          //  4 bytes
     int   depthMapIndex;      //  4 bytes
+    int   voxelRootIndex;     //  4 bytes
 };
 
 layout(std430, binding = 0) buffer LightBlock {
@@ -21,74 +22,42 @@ layout(std430, binding = 0) buffer LightBlock {
 };                   // implicit padding to 128 bytes per element
 uniform int lightCount;
 
-uniform sampler2D            textureMap;
-// uniform sampler2DArrayShadow depthMaps;   // shadow sampler!
-uniform sampler2DArray depthMaps;   // shadow sampler!
-// uniform sampler2D shadowMap;   // shadow sampler!
+uniform sampler2D      textureMap;
+uniform sampler2DArray depthMaps;
 
 uniform vec3 cameraPos;
 
 out vec4 FragColor;
 
-// const vec3 lightPos = vec3(0, 100, 100);
-// ... other uniforms for material, etc.
-
 float ShadowCalculation(vec4 fragPosLightSpace, float bias, int index)
 {
     vec3 coords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     coords = coords * 0.5 + 0.5;
-    // vec4 texPosition = vec4(fragPosLightSpace.xy, float(index), fragPosLightSpace.z);
+
+    if (coords.x < 0.0 || coords.x > 1.0 || coords.y < 0.0 || coords.y > 1.0 || coords.z < 0.0 || coords.z > 1.0) {
+        return 1.0; // No shadow contribution (fully lit)
+    }
+
     vec4 texPosition = vec4(coords.xy, float(index), coords.z - bias);
-    // vec3 texPosition = vec4(coords.xy, float(index));
     
-    // // Perform perspective divide to get normalized device coordinates
-    // vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    // // Transform to [0,1] range (standard for texture lookup)
-    // projCoords = projCoords * 0.5 + 0.5;
-
-    // Get closest depth from light's perspective (using textureProj)
-    // float closestDepth = textureProj(shadowMap, fragPosLightSpace);
-    // fragPosLightSpace.xyw = fragPosLightSpace.xyz;
-    // fragPosLightSpace.z = index;
-    // float closestDepth = textureProj(depthMaps, fragPosLightSpace);
-
-    // Alternatively, with a standard sampler2D you would do:
-    // float closestDepth = (texture(depthMaps, vec3(projCoords.xy, index)).r - 0.5) * 2.0;
-    // float closestDepth = texture(depthMaps, texPosition).r;
-    
-    float currentDepth = (fragPosLightSpace.z - bias) / 2.0 + 0.5;
+    float currentDepth = coords.z - bias;
 
     float shadow    = 0.0;
     vec2  texelSize = 1.0 / textureSize(depthMaps, 0).xy;
     for(int x = -1; x <= 1; x++) {
         for(int y = -1; y <= 1; y++) {
-            vec3 pcfPosition = vec3(texPosition.xy + vec2(x, y) * texelSize, index);
-            shadow += currentDepth > texture(depthMaps, pcfPosition).r ? 1.0 : 0.0;
+            vec3  pcfPosition = vec3(texPosition.xy + vec2(x, y) * texelSize, index);
+            float pcfDepth    = texture(depthMaps, pcfPosition).r;
+            shadow += (pcfDepth == 1.0 || currentDepth > pcfDepth) ? 1.0 : 0.0;
+            // shadow += (currentDepth > pcfDepth) ? 1.0 : 0.0;
         }
     }
 
     return shadow / 9.0;
-
-    // return closestDepth;  // 1.0 if lit, 0.0 if shadowed (or fractional for PCF)
 }
 
 void main()
 {
-    // ... compute lighting (ambient, diffuse, specular) ...
-
-    // Light light = lights[0];
-
-    // vec4 FragPosLightSpace = light.lightSpaceMatrix * FragPos;
-    // // vec4 FragPosLightSpace = lightSpaceMatrix * FragPos;
-
-    // // float closestDepth = ShadowCalculation(FragPosLightSpace, light.depthMapIndex);
-    // // float bias = max(0.02 * (1.0 - dot(Normal, light.direction)), 0.002); 
-    // // // float shadow = closestDepth - bias > FragPosLightSpace.z ? 1.0 : 0.0; 
-    // // // Combine: final color = (ambient + (1.0 - shadow) * (diffuse + specular)) * objectColor
-    
-    // float bias = max(0.03 * (1.0 - dot(normalize(Normal), normalize(light.direction))), 0.005);
-    // float closestDepth = ShadowCalculation(FragPosLightSpace, bias, light.depthMapIndex);
-
     vec4 texColour    = texture(textureMap, TexCoords);
     vec3 diffuseColor = texColour.xyz;
 
@@ -101,8 +70,20 @@ void main()
         Light light = lights[i];
         vec3 lightDir = normalize(light.direction);
 
+        // Spotlight direction correction
+        if(light.coneAngle != -1.0f) {
+            lightDir = normalize(FragPos.xyz - light.position);
+        
+            float cosAngle     = dot(lightDir, normalize(light.direction));
+            float cosConeAngle = cos(radians(light.coneAngle * 0.5));
+
+            if(cosAngle < cosConeAngle) {
+                continue;
+            }
+        }
+
         vec4  fragPosLightSpace = light.lightSpaceMatrix * FragPos;
-        float bias              = max(0.03 * (1.0 - dot(norm, lightDir)), 0.005);
+        float bias              = max(0.0005 * (1.0 - dot(norm, -lightDir)), 0.0005);
         float shadow            = ShadowCalculation(fragPosLightSpace, bias, light.depthMapIndex);
 
         float diff    = max(dot(norm, -lightDir), 0.0);
@@ -115,20 +96,6 @@ void main()
 
         result += (1.0 - shadow) * (diffuse + specular);
     }
-
-
-    // // // vec3 finalColor = light.colour * shadowValue;
-    // vec3 finalColor = vec3(1.0 - closestDepth);
-                    
-    // // vec3 finalColor;
-    // // if(FragPosLightSpace.z - bias > closestDepth) {
-    // //     finalColor = vec3(0.0, 0.0, 1.0);
-    // // } else {
-    // //     finalColor = light.colour;
-    // // }
-
-    // // FragColor = vec4(finalColor, 1.0);
-    // FragColor = vec4(texture(textureMap, TexCoords));
 
     FragColor = vec4(result, texColour.z);
 }

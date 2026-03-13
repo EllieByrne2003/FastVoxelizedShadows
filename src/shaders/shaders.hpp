@@ -38,6 +38,9 @@ public:
 
 class DepthShader : public Shader {
 private:
+    GLuint positionLoc;
+    GLuint directionLoc;
+    GLuint coneAngleLoc;
 
 protected:
 

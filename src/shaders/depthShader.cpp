@@ -15,6 +15,9 @@
 #define SHADER_DIR std::string("res/shaders")
 
 DepthShader::DepthShader(const std::shared_ptr<const GLuint> &id) : Shader(id) {
+    positionLoc  = glGetUniformLocation(*id, "position");
+    directionLoc = glGetUniformLocation(*id, "direction");
+    coneAngleLoc = glGetUniformLocation(*id, "coneAngle");
 }
 
 DepthShader::~DepthShader() {
@@ -79,6 +82,14 @@ void DepthShader::passLightUniforms(const Light &light, const mat4 &proj) const 
     const mat4 view = light.getView();
     // TODO can just get both the view and proj as one lightSpace matrix
 
+    const vec3  position  = light.getPosition();
+    const vec3  direction = light.getDirection();
+    const float coneangle = light.getConeAngle();
+
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, &proj[0][0]);
+
+    glUniform3f(positionLoc,  position.x,  position.y,  position.z);
+    glUniform3f(directionLoc, direction.x, direction.y, direction.z);
+    glUniform1f(coneAngleLoc, coneangle);
 }

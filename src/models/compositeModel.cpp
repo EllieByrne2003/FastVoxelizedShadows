@@ -95,12 +95,12 @@ void CompositeModel::drawDepths(const Scene *const scene, const Light &light, co
     }
 }
 
-void CompositeModel::expandBounds(const mat4 &view, float &left, float &right, float &bottom, float &up, float &far, const mat4 &parentModel) const {
+void CompositeModel::expandBounds(Bounds &bounds, const mat4 &view, const mat4 &proj, const mat4 &parentModel) const {
     const mat4 localModel = createLocalModelMatrix();
     const mat4 trueModel = parentModel * localModel;
 
     for(const Model *const model : models) {
-        model->expandBounds(view, left, right, bottom, up, far, trueModel);
+        model->expandBounds(bounds, view, proj, trueModel);
     }
 }
 

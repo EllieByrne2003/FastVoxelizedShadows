@@ -50,6 +50,16 @@ int main() {
         return -1;
     }
 
+    // Max sizes for viewports and textures
+    GLint maxTextureSize = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+
+    GLint maxViewportSize[] = {0, 0};
+    glGetIntegerv(GL_MAX_VIEWPORT_DIMS, maxViewportSize);
+
+    std::cout << "Max texture size:  " << maxTextureSize     << "*" << maxTextureSize     << std::endl;
+    std::cout << "Max viewport size: " << maxViewportSize[0] << "*" << maxViewportSize[1] << std::endl;
+
     glEnable(GL_DEPTH_TEST);
     scene->setupLights(false); // TODO should be true, this should be called each frame
 

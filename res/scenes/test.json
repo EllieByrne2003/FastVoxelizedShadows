@@ -103,14 +103,21 @@
         {
             "position": "100 100 0",
             "direction": "-1 -1 0",
-            "colour": "0.3 0.3 0.3",
-            "intensity": 1.0
+            "colour": "0.3 0.3 0.9",
+            "intensity": 10000.0
         },
         {
             "position": "0 100 100",
             "direction": "0 -1 -1",
-            "colour": "0.3 0.3 0.3",
-            "intensity": 1.0
+            "colour": "0.9 0.3 0.3",
+            "intensity": 10000.0
+        },
+        {
+            "position": "0 25 0",
+            "direction": "0 -1 0",
+            "colour": "0.3 0.9 0.3",
+            "intensity": 100.0,
+            "coneAngle": 30.0
         }
     ]
 }

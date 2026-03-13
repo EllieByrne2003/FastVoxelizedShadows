@@ -31,5 +31,5 @@ public:
 
     void draw() const;
 
-    void expandBounds(const mat4 &transform, float &left, float &right, float &bottom, float &up, float &far) const;
+    void expandBounds(Bounds &bounds, const mat4 &transform) const;
 };

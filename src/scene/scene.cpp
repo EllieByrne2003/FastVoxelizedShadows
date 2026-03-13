@@ -158,7 +158,7 @@ void Scene::setupLights(const bool voxelize) {
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
-    glViewport(0, 0, 16*1024, 16*1024);
+    glViewport(0, 0, 8*1024, 8*1024);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         // TODO error needs handling
@@ -199,7 +199,7 @@ void Scene::addLight(Light *light) {
         delete depthMaps;
     }
 
-    depthMaps = TextureArray::createTexture(lights.size(), 16*1024, 16*1024, 1);
+    depthMaps = TextureArray::createTexture(lights.size(), 8*1024, 8*1024, 1);
 }
 
 void Scene::move(const Direction direction, const float time) {
@@ -222,28 +222,29 @@ mat4 Scene::getProj() const {
     return camera.getProj();
 }
 
-#include <iostream>
 
-// TODO should return a projection to include all visible (to the light) vertices
 mat4 Scene::getProj(const Light &light) const {
-    // float left = 0.0f, right = 0.0f, bottom = 0.0f, top = 0.0f, far = 0.0f;
+    Bounds bounds;
 
-    float left   = std::numeric_limits<float>::max();
-    float right  = std::numeric_limits<float>::lowest();
-    float bottom = std::numeric_limits<float>::max();
-    float top    = std::numeric_limits<float>::lowest();
-    // float back   = std::numeric_limits<float>::max();
-    float far  = std::numeric_limits<float>::lowest();
+    mat4 tempProj;
+    if(light.isDirectional()) {
+        tempProj = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f); // Just to do calculations
+    } else{
+        tempProj = glm::perspective(glm::radians(30.0f), 1.0f, 0.0f, 1.0f);
+    }
 
     // We need to iterate through all model
     for(const Model *const model : models) {
-        model->expandBounds(light.getView(), left, right, bottom, top, far);
+        model->expandBounds(bounds, light.getView(), tempProj);
     }
+    
 
-    std::cout << "left: " << left << " right: " << right << " bottom: " << bottom << " top: " << top << " far: " << far << std::endl; 
-
-    // return glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 20.0f);
-    return glm::ortho(left, right, bottom, top, 0.1f, far);
+    if(light.isDirectional()) {
+        
+        return glm::ortho(bounds.left, bounds.right, bounds.bottom, bounds.top, 0.0f, bounds.front);
+    } else {
+        return glm::perspective(glm::radians(light.getConeAngle()), 1.0f, bounds.back, std::min(bounds.front, light.getIntensity()));
+    }
 }
 
 vec3 Scene::getCameraPos() const {

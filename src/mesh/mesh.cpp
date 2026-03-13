@@ -64,63 +64,28 @@ void Mesh::draw() const {
     glBindVertexArray(0);
 }
 
-void Mesh::expandBounds(const mat4 &transform, float &left, float &right, float &bottom, float &up, float &far) const {
+void Mesh::expandBounds(Bounds &bounds, const mat4 &transform) const {
     // TODO just have these in bounds
     vec3 corners[8] = {
-        glm::vec3(bounds.left,  bounds.bottom, bounds.back),
-        glm::vec3(bounds.right, bounds.bottom, bounds.back),
-        glm::vec3(bounds.left,  bounds.top,    bounds.back),
-        glm::vec3(bounds.right, bounds.top,    bounds.back),
-        glm::vec3(bounds.left,  bounds.bottom, bounds.front),
-        glm::vec3(bounds.right, bounds.bottom, bounds.front),
-        glm::vec3(bounds.left,  bounds.top,    bounds.front),
-        glm::vec3(bounds.right, bounds.top,    bounds.front)
+        glm::vec3(this->bounds.left,  this->bounds.bottom, this->bounds.back),
+        glm::vec3(this->bounds.right, this->bounds.bottom, this->bounds.back),
+        glm::vec3(this->bounds.left,  this->bounds.top,    this->bounds.back),
+        glm::vec3(this->bounds.right, this->bounds.top,    this->bounds.back),
+        glm::vec3(this->bounds.left,  this->bounds.bottom, this->bounds.front),
+        glm::vec3(this->bounds.right, this->bounds.bottom, this->bounds.front),
+        glm::vec3(this->bounds.left,  this->bounds.top,    this->bounds.front),
+        glm::vec3(this->bounds.right, this->bounds.top,    this->bounds.front)
     };
 
     for(const vec3 &pos : corners) {
         const vec3 transformed = transform * vec4(pos, 1.0);
 
-        left   = std::min(left,   transformed.x);
-        bottom = std::min(bottom, transformed.y);
+        bounds.left   = std::min(bounds.left,   transformed.x);
+        bounds.bottom = std::min(bounds.bottom, transformed.y);
+        bounds.back   = std::min(bounds.back,   transformed.z);
 
-        right = std::max(right, transformed.x);
-        up    = std::max(up,    transformed.y);
-        far   = std::max(far,   transformed.z);
+        bounds.right = std::max(bounds.right, transformed.x);
+        bounds.top   = std::max(bounds.top,   transformed.y);
+        bounds.front = std::max(bounds.front, transformed.z);
     }
-
-
-    // const vec3 v1 = transform * vec4(bounds.left, bounds.bottom, bounds.back, 1.0);
-    // const vec3 v2 = transform * vec4(bounds.right, bounds.top, bounds.front, 1.0);
-
-    // // const vec3 min = transform * vec4(v1, 1.0);
-    // // const vec3 max = transform * vec4(v2, 1.0);
-
-    // left   = std::min(left,   std::min(v1.x, v2.x));
-    // bottom = std::min(bottom, std::min(v1.y, v2.y));
-
-    // right = std::max(right, std::max(v1.x, v2.x));
-    // up    = std::max(up,    std::max(v1.y, v2.y));
-    // far   = std::max(far,   std::max(v1.z, v2.z));
-
-    // // if(min.x < left) {
-    // //     left = min.x;
-    // // }
-
-    // // if(min.y < bottom) {
-    // //     bottom = min.y;
-    // // }
-
-    // // // Don't check min.z, no need to look backwards
-
-    // // if(max.x > right) {
-    // //     right = max.x;
-    // // }
-
-    // // if(max.y > up) {
-    // //     up = max.y;
-    // // }
-
-    // // if(max.z > far) {
-    // //     far = max.z;
-    // // }
 }
