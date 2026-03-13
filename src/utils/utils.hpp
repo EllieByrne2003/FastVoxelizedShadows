@@ -2,10 +2,12 @@
 
 #include <string>
 
+#include "../bounds/bounds.hpp"
+
 typedef unsigned int GLuint;
 
 // meshes.cpp
-int readOBJ(const std::string &filepath, GLuint &VAO, GLuint &VBO, GLuint &EBO);
+int readOBJ(const std::string &filepath, GLuint &VAO, GLuint &VBO, GLuint &EBO, Bounds &bounds);
 
 // textures.cpp
 GLuint createTexture(const std::string &path, int &width, int &height, int &nChannels);

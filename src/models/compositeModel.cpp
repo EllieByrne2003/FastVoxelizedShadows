@@ -80,7 +80,7 @@ void CompositeModel::draw(const Scene *const scene, const mat4 &parentModel) con
     const mat4 localModel = createLocalModelMatrix();
     const mat4 trueModel = parentModel * localModel;
 
-    for(Model *const model : models) {
+    for(const Model *const model : models) {
         model->draw(scene, trueModel);
     }
 }
@@ -90,8 +90,17 @@ void CompositeModel::drawDepths(const Scene *const scene, const Light &light, co
     const mat4 localModel = createLocalModelMatrix();
     const mat4 trueModel = parentModel * localModel;
 
-    for(Model *const model : models) {
+    for(const Model *const model : models) {
         model->drawDepths(scene, light, drawEntry, trueModel);
+    }
+}
+
+void CompositeModel::expandBounds(const mat4 &view, float &left, float &right, float &bottom, float &up, float &far, const mat4 &parentModel) const {
+    const mat4 localModel = createLocalModelMatrix();
+    const mat4 trueModel = parentModel * localModel;
+
+    for(const Model *const model : models) {
+        model->expandBounds(view, left, right, bottom, up, far, trueModel);
     }
 }
 

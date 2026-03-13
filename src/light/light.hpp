@@ -19,6 +19,8 @@ private:
     
     int depthMapIndex = -1; // None assigned 
 
+    // TODO add some data to let lights be directional or spot lights
+
 protected:
 
 public:

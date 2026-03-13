@@ -3,6 +3,8 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 
+#include <glm/ext/matrix_clip_space.hpp>
+
 #include "../animation/animation.hpp"
 #include "../renderer/renderer.hpp"
 #include "../shaders/shaders.hpp"
@@ -108,4 +110,14 @@ void MeshModel::drawDepths(const Scene *const scene, const Light &light, const b
 
 void MeshModel::bindTexture(const GLuint loc) const {
     texture->bind(loc, 0); // TODO accept slot as parameter
+}
+
+void MeshModel::expandBounds(const mat4 &view, float &left, float &right, float &bottom, float &up, float &far, const mat4 &parentModel) const {
+    const mat4 localModel = createLocalModelMatrix();
+    const mat4 trueModel  = parentModel * localModel;
+    const mat4 proj       = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f); // Just to do calculations
+    const mat4 transform  = proj * view * trueModel;
+    // const mat4 transform  = view * trueModel;
+
+    mesh->expandBounds(transform, left, right, bottom, up, far);
 }
