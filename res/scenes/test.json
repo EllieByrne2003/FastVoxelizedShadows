@@ -27,7 +27,7 @@
             ]
         },
         {
-            "position": "5 0 5",
+            "position": "5 0.5 5",
             "rotation": "0 0 0",
             "scale": "1 1 1",
 
@@ -49,13 +49,67 @@
             "animations": [
 
             ]
+        },
+        {
+            "position": "-5 2 -5",
+            "rotation": "-90 0 0",
+            "scale": "0.1 0.1 0.1",
+
+            "mesh": "benchy.obj",
+            "texture": "moonnormal.jpg",
+
+            "shader": {
+                "type": "shadowSampler",
+                "vertex": "simpleShadow/vertex.glsl",
+                "fragment": "simpleShadow/fragment.glsl"
+            },
+
+            "depthShader": {
+                "type": "depth",
+                "vertex": "depth/vertex.glsl",
+                "fragment": "depth/fragment.glsl"
+            },
+
+            "animations": [
+
+            ]
+        },
+        {
+            "position": "0 0 0",
+            "rotation": "0 0 0",
+            "scale": "100 100 100",
+
+            "mesh": "plane.obj",
+            "texture": "grid.png",
+
+            "shader": {
+                "type": "shadowSampler",
+                "vertex": "simpleShadow/vertex.glsl",
+                "fragment": "simpleShadow/fragment.glsl"
+            },
+
+            "depthShader": {
+                "type": "depth",
+                "vertex": "depth/vertex.glsl",
+                "fragment": "depth/fragment.glsl"
+            },
+
+            "animations": [
+
+            ]
         }
     ],
     "lights": [
         {
-            "position": "0 10 10",
+            "position": "100 100 0",
+            "direction": "-1 -1 0",
+            "colour": "0.3 0.3 0.3",
+            "intensity": 1.0
+        },
+        {
+            "position": "0 100 100",
             "direction": "0 -1 -1",
-            "colour": "0 1 0",
+            "colour": "0.3 0.3 0.3",
             "intensity": 1.0
         }
     ]
