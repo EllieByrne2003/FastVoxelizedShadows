@@ -12,16 +12,23 @@
 
 #include "../utils/utils.hpp"
 
+#include <iostream>
+
 #define SHADER_DIR std::string("res/shaders")
 
-#define DEPTHMAP_SLOT 1
+#define DEPTHMAP_SLOT 0
+#define TEXTURE_SLOT  1
+#define VOXEL_SLOT    2
 
 ShadowSampleShader::ShadowSampleShader(const std::shared_ptr<const GLuint> &id) : Shader(id) {
+    cameraPosLoc  = glGetUniformLocation(*id, "cameraPos");
+    textureMapLoc = glGetUniformLocation(*id, "textureMap");
+
     lightCountLoc = glGetUniformLocation(*id, "lightCount");
     depthMapsLoc  = glGetUniformLocation(*id, "depthMaps");
-    cameraPosLoc  = glGetUniformLocation(*id, "cameraPos");
 
-    textureMapLoc  = glGetUniformLocation(*id, "textureMap");
+    voxelCountLoc = glGetUniformLocation(*id, "voxelCount");
+    voxelsLoc     = glGetUniformLocation(*id, "voxels");
 }
 
 ShadowSampleShader::~ShadowSampleShader() {
@@ -77,7 +84,7 @@ void ShadowSampleShader::passShaderUniforms() const {
 void ShadowSampleShader::passModelUniforms(const MeshModel *const model, const mat4 &trueMatrix) const {
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &trueMatrix[0][0]);
 
-    model->bindTexture(textureMapLoc);
+    model->bindTexture(textureMapLoc, TEXTURE_SLOT);
 }
 
 void ShadowSampleShader::passSceneUniforms(const Scene *const scene) const {
@@ -91,6 +98,7 @@ void ShadowSampleShader::passSceneUniforms(const Scene *const scene) const {
 
     glUniform3f(cameraPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
 
-    scene->bindLights(lightCountLoc);
+    scene->bindLights(lightCountLoc, 0); // TODO store index elsewhere
     scene->bindDepthMaps(depthMapsLoc, DEPTHMAP_SLOT);
+    scene->bindVoxels(voxelsLoc, voxelCountLoc, VOXEL_SLOT);
 }

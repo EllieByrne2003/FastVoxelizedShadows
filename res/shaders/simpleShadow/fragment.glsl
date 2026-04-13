@@ -19,11 +19,13 @@ struct Light {
 
 layout(std430, binding = 0) buffer LightBlock {
     Light lights[];
-};                   // implicit padding to 128 bytes per element
+};
 uniform int lightCount;
+uniform int voxelCount;
 
 uniform sampler2D      textureMap;
 uniform sampler2DArray depthMaps;
+uniform usamplerBuffer voxels;
 
 uniform vec3 cameraPos;
 
@@ -56,6 +58,69 @@ float ShadowCalculation(vec4 fragPosLightSpace, float bias, int index)
     return shadow / 9.0;
 }
 
+// Get index inside current voxel
+uint getChildIndex(uint height, uvec3 coords) {
+    uvec3 shiftedCoords = (coords >> height) & 1u;
+
+    return shiftedCoords.z << 2 | shiftedCoords.y << 1 | shiftedCoords.x;
+}
+
+// Pick the specific child out
+uint getChildData(uint childrenData, uint index) {
+    return (childrenData >> (index * 4)) & 15u;
+}
+
+float voxelShadowCalculation(vec4 fragPosLightSpace, int rootIndex) {
+    if(rootIndex == -1 || rootIndex >= voxelCount) {
+        return 1.0;
+    }
+
+    if (fragPosLightSpace.w <= 0.0) {
+        return 1.0;
+    }
+
+    vec3 normalizedFragPosLightSpace = (fragPosLightSpace.xyz / fragPosLightSpace.w);
+    normalizedFragPosLightSpace = (normalizedFragPosLightSpace + 1.0) * 0.5;
+
+    float shadow = 0.0;
+    for(int x = -1; x <= 1; x++) {
+        for(int y = -1; y <= 1; y++) {
+            int height = 10;
+
+            uvec3 fragPosTreeSpace = uvec3(2048 * normalizedFragPosLightSpace) + uvec3(x, y, 0);
+            uvec2 voxel = texelFetch(voxels, rootIndex).xy;
+
+            while(height >= 0) {
+                // Get index
+                uint index = getChildIndex(height, fragPosTreeSpace);
+
+                // Get child state
+                uint childState = getChildData(voxel.y, index);
+
+                // If lit, return lit
+                if(childState == 15u) {
+                    //return 1.0;
+                    break;
+                }
+
+                // If dim, return dim
+                if(childState == 14u) {
+                    shadow += 1.0;
+                    break;
+                    //return 0.0;
+                }
+
+                // Get child node
+                voxel = texelFetch(voxels, int(voxel.x + childState)).xy;
+
+                height--;
+            }
+        }
+    }
+
+    return shadow / 9.0;;
+}
+
 void main()
 {
     vec4 texColour    = texture(textureMap, TexCoords);
@@ -64,7 +129,7 @@ void main()
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(cameraPos - FragPos.xyz);
 
-    vec3 result = 0.1 * diffuseColor;
+    vec3 result = 0.2 * diffuseColor;
 
     for(int i = 0; i < lightCount; i++) {
         Light light = lights[i];
@@ -82,9 +147,11 @@ void main()
             }
         }
 
+        //vec4 fragPosLightSpace = vec4(0, 0, -1.0, 1.0);
         vec4  fragPosLightSpace = light.lightSpaceMatrix * FragPos;
         float bias              = max(0.0005 * (1.0 - dot(norm, -lightDir)), 0.0005);
-        float shadow            = ShadowCalculation(fragPosLightSpace, bias, light.depthMapIndex);
+        // float shadow            = ShadowCalculation(fragPosLightSpace, bias, light.depthMapIndex);
+        float shadow = voxelShadowCalculation(fragPosLightSpace - vec4(0, 0, bias * 2048.0, 0), light.voxelRootIndex);
 
         float diff    = max(dot(norm, -lightDir), 0.0);
         vec3  diffuse = diff * light.colour * diffuseColor;
@@ -95,6 +162,8 @@ void main()
         vec3  specular   = spec * light.colour;
 
         result += (1.0 - shadow) * (diffuse + specular);
+
+        //result = (1.0 - shadow) * diffuseColor;
     }
 
     FragColor = vec4(result, texColour.z);

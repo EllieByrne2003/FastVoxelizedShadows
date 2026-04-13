@@ -59,11 +59,14 @@ public:
 
 class ShadowSampleShader : public Shader {
 private:
+    GLuint cameraPosLoc;
+    GLuint textureMapLoc;
+
     GLuint lightCountLoc;
     GLuint depthMapsLoc;
-    GLuint cameraPosLoc;
 
-    GLuint textureMapLoc;
+    GLuint voxelCountLoc;
+    GLuint voxelsLoc;
 
 protected:
 

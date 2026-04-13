@@ -1,57 +1,107 @@
-#version 330 core
+#version 430 core
 
-in vec3 pos;
-in vec3 normal;
-in vec2 texCoords;
-in vec4 posLightSpace;
+const int MAX_LIGHTS = 256;
 
-uniform vec3  cameraPos;
-uniform float shininess;
+in vec4 FragPos;
+in vec3 Normal;
+in vec2 TexCoords;
 
-// Lighting constants
-const vec3  LIGHT_POS       = vec3(0.0, 100, 100);
-const vec3  LIGHT_DIR       = normalize(LIGHT_POS);
-const vec3  LIGHT_COLOR     = vec3(1.0, 1.0, 1.0);
-const float LIGHT_INTENSITY = 1.0;
+struct Light {
+    mat4  lightSpaceMatrix;   // 64 bytes
+    vec3  position;           // 16 bytes (vec4 in std430)
+    vec3  direction;          // 16 bytes
+    vec3  colour;             // 16 bytes
+    float intensity;          //  4 bytes
+    float coneAngle;          //  4 bytes
+    int   depthMapIndex;      //  4 bytes
+    int   voxelRootIndex;     //  4 bytes
+};
 
-// Shading constants
-const vec3  AMBIENT_COLOR  = vec3(0.1, 0.1, 0.1);
-const vec3  DIFFUSE_COLOR  = vec3(0.5, 0.5, 0.5);
-const vec3  SPECULAR_COLOR = vec3(0.0, 1.0, 0.0);
+layout(std430, binding = 0) buffer LightBlock {
+    Light lights[];
+};
+uniform int lightCount;
+uniform int voxelCount;
 
-uniform sampler2D textureMap;
-uniform sampler2D shadowMap;
+uniform sampler2D      textureMap;
+uniform sampler2DArray depthMaps;
+uniform usamplerBuffer voxels;
 
-out vec4 color;
+uniform vec3 cameraPos;
 
-float ShadowCalculation(vec4 fragPosLightSpace)
+out vec4 FragColor;
+
+float ShadowCalculation(vec4 fragPosLightSpace, float bias, int index)
 {
-    // perform perspective divide
-    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    // transform to [0,1] range
-    projCoords = projCoords * 0.5 + 0.5;
-    // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-    float closestDepth = texture(shadowMap, projCoords.xy).r; 
-    // get depth of current fragment from light's perspective
-    float currentDepth = projCoords.z;
-    // check whether current frag pos is in shadow
-    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+    vec3 coords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    coords = coords * 0.5 + 0.5;
 
-    return shadow;
-}  
+    if (coords.x < 0.0 || coords.x > 1.0 || coords.y < 0.0 || coords.y > 1.0 || coords.z < 0.0 || coords.z > 1.0) {
+        return 1.0; // No shadow contribution (fully lit)
+    }
 
-void main() {
-    vec3 ambient = AMBIENT_COLOR * LIGHT_COLOR;
+    vec4 texPosition = vec4(coords.xy, float(index), coords.z - bias);
+    
+    float currentDepth = coords.z - bias;
 
-    float diff     = max(dot(normalize(normal), LIGHT_DIR), 0.0);
-    vec3  diffuse  = diff * DIFFUSE_COLOR * LIGHT_COLOR * LIGHT_INTENSITY;
+    float shadow    = 0.0;
+    vec2  texelSize = 1.0 / textureSize(depthMaps, 0).xy;
+    for(int x = -1; x <= 1; x++) {
+        for(int y = -1; y <= 1; y++) {
+            vec3  pcfPosition = vec3(texPosition.xy + vec2(x, y) * texelSize, index);
+            float pcfDepth    = texture(depthMaps, pcfPosition).r;
+            shadow += (pcfDepth == 1.0 || currentDepth > pcfDepth) ? 1.0 : 0.0;
+            // shadow += (currentDepth > pcfDepth) ? 1.0 : 0.0;
+        }
+    }
 
-    vec3  viewDir    = normalize(cameraPos - pos);
-    vec3  halfwayDir = normalize(LIGHT_DIR + viewDir);
-    float spec       = pow(max(dot(normalize(normal), halfwayDir), 0.0), shininess);
-    vec3  specular   = spec * SPECULAR_COLOR * LIGHT_COLOR * LIGHT_INTENSITY;
+    return shadow / 9.0;
+}
 
-    vec3 result = ambient + (1 - ShadowCalculation(posLightSpace)) * (diffuse + specular);
+void main()
+{
+    vec4 texColour    = texture(textureMap, TexCoords);
+    vec3 diffuseColor = texColour.xyz;
 
-    color = vec4(result, 1.0);
+    vec3 norm = normalize(Normal);
+    vec3 viewDir = normalize(cameraPos - FragPos.xyz);
+
+    vec3 result = 0.2 * diffuseColor;
+
+    for(int i = 0; i < lightCount; i++) {
+        Light light = lights[i];
+        vec3 lightDir = normalize(light.direction);
+
+        // Spotlight direction correction
+        if(light.coneAngle != -1.0f) {
+            lightDir = normalize(FragPos.xyz - light.position);
+        
+            float cosAngle     = dot(lightDir, normalize(light.direction));
+            float cosConeAngle = cos(radians(light.coneAngle * 0.5));
+
+            if(cosAngle < cosConeAngle) {
+                continue;
+            }
+        }
+
+        //vec4 fragPosLightSpace = vec4(0, 0, -1.0, 1.0);
+        vec4  fragPosLightSpace = light.lightSpaceMatrix * FragPos;
+        float bias              = max(0.0005 * (1.0 - dot(norm, -lightDir)), 0.0005);
+        float shadow            = ShadowCalculation(fragPosLightSpace, bias, light.depthMapIndex);
+        //float shadow = voxelShadowCalculation(fragPosLightSpace - vec4(0, 0, bias * 1024.0, 0), light.voxelRootIndex);
+
+        float diff    = max(dot(norm, -lightDir), 0.0);
+        vec3  diffuse = diff * light.colour * diffuseColor;
+
+        // Blinn phong
+        vec3  halfwayDir = normalize(viewDir - lightDir);
+        float spec       = pow(max(dot(norm, halfwayDir), 0.0), 32.0);
+        vec3  specular   = spec * light.colour;
+
+        result += (1.0 - shadow) * (diffuse + specular);
+
+        //result = (1.0 - shadow) * diffuseColor;
+    }
+
+    FragColor = vec4(result, texColour.z);
 }

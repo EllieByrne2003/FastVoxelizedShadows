@@ -9,12 +9,18 @@ using namespace glm;
 #include "node.hpp"
 #include "svo.hpp"
 
+typedef unsigned int GLuint;
+
 class Forest {
 private:
+    GLuint bufferID;
+    GLuint textureID;
+
     std::mutex nodeMutex;
+
+    std::vector<int>  roots;
     std::vector<Node> nodes;
 
-    // TOD have the stuff for buffering and binding
 
 protected:
 
@@ -22,31 +28,14 @@ public:
     Forest(); // TODO should be undefined initially
     ~Forest();
 
-    bool isLit(const int rootIndex, const ivec3 &coords) const;
-    bool isDim(const int rootIndex, const ivec3 &coords) const;
-
-    void setLit(const int rootIndex, const ivec3 &coords) const;
-    void setDim(const int rootIndex, const ivec3 &coords) const;
-
-    void setLitAbove(const int rootIndex, const ivec3 &coords, const int depth) const;
-    void setDimAbove(const int rootIndex, const ivec3 &coords, const int depth) const;
-
-    void setLitBelow(const int rootIndex, const ivec3 &coords, const int depth) const;
-    void setDimBelow(const int rootIndex, const ivec3 &coords, const int depth) const;
-
     // TODO should merge svo into nodes
-    void addTree(const SVO &svo);
+    int addTree(const SVO &svo);
+    int addNode(const SVO &svo, const int childInd);
+    int addChildren(const SVO &svo);
 
+    void addChildren(Node &parent, const SVO &svo, const int lastComplete);
 
-    // // Node functions
-    // bool childIsNode(const int index) const;
-    // bool childIsLeaf(const int index) const;
-    // bool childIsLit(const int index) const;
-    // bool childIsDim(const int index) const;
+    bool equals(const Node &node, const SVO &svo) const;
 
-    // int getChildCount() const;
-    // int getChildIndex(const int index) const;
-
-    // // Leaf functions
-
+    void bind( const GLuint voxelsLoc, const GLuint voxelCountLoc, const int slot) const;
 };

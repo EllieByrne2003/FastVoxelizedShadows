@@ -3,7 +3,7 @@
     "description": "Test of my loading functions",
     "models": [
         {
-            "position": "0 0 0",
+            "position": "-2 2 2",
             "rotation": "0 0 0",
             "scale": "1 1 1",
 
@@ -75,12 +75,12 @@
             ]
         },
         {
-            "position": "0 0 0",
-            "rotation": "0 0 0",
-            "scale": "100 100 100",
+            "position": "-5 2 5",
+            "rotation": "-90 -30 90",
+            "scale": "0.1 0.1 0.1",
 
-            "mesh": "plane.obj",
-            "texture": "grid.png",
+            "mesh": "benchy.obj",
+            "texture": "moonnormal.jpg",
 
             "shader": {
                 "type": "shadowSampler",
@@ -101,23 +101,11 @@
     ],
     "lights": [
         {
-            "position": "100 100 0",
-            "direction": "-1 -1 0",
-            "colour": "0.3 0.3 0.9",
-            "intensity": 10000.0
-        },
-        {
-            "position": "0 100 100",
-            "direction": "0 -1 -1",
-            "colour": "0.9 0.3 0.3",
-            "intensity": 10000.0
-        },
-        {
             "position": "0 25 0",
             "direction": "0 -1 0",
-            "colour": "0.3 0.9 0.3",
-            "intensity": 100.0,
-            "coneAngle": 30.0
+            "colour": "0.9 0.9 0.9",
+            "intensity": 30.0,
+            "coneAngle": 50.0
         }
     ]
 }

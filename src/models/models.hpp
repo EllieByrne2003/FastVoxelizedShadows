@@ -128,7 +128,7 @@ public:
 
     // Class specific functions
     // void bindShader() const;
-    void bindTexture(const GLuint loc) const;
+    void bindTexture(const GLuint loc, const int slot) const;
 };
 
 class CompositeModel : public Model {

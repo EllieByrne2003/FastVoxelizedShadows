@@ -1,244 +1,342 @@
 #include "svo.hpp"
 
+#include <iostream>
 #include <cassert>
+#include <memory>
 
-SVO::SVO(const int height, const int size) : height(height), size(size) {
+#include "../hierarchy/hierarchy.hpp"
 
+int getIndex(const ivec3 &coords) {
+    return (coords.z & 0b1) << 2 | (coords.y & 0b1) << 1 | (coords.x & 0b1);
 }
 
-SVO::SVO(const int height, const int size, const Node &node) : height(height), size(size), node(node) {
+SVO::SVO() : SVO(0) {
+}
 
+SVO::SVO(const int height, const TreeState state) : height(height) {
+    assert(height >= 0);
+
+    for(int i = 0; i < 8; i++) {
+        states[i] = state;
+    }
 }
 
 SVO::~SVO() {
 
 }
 
-void SVO::splitSelf() {
-    assert(!compressed);
+void SVO::split(const int index) {
+    assert(height > 0);
+    assert(states[index] != SPL);
 
-    for(int i = 0; i < 8; i++) {
-        children.emplace_back(height - 1, size / 2, node);
-
-        node.childSetNode(i);
-        node.setChildOffset(i, i);
-    }
+    children[index] = std::make_shared<SVO>(height - 1, states[index]);
+    states[index]   = TreeState::SPL;
 }
 
-void SVO::mergeSelf() {
-    assert(!compressed);
-
-    const SVO &first = children[0];
-
-    // Don't merge if grandchildren exist
-    if(first.children.size() > 0) {
+void SVO::merge(const int index) {
+    const TreeState state = states[index];
+    
+    if(state != TreeState::SPL) {
         return;
     }
- 
-    // All children must be equal
-    for(int i = 1; i < 8; i++) {
-        if(first != children[1]) {
+
+    std::shared_ptr<SVO> &child = children[index];
+
+    // Check first can be merged (also checks others with later check for equality)
+    if(child->states[0] == SPL) {
+        return;
+    }
+
+    for(int i = 0; i < 7; i++) {
+        if(child->states[i] != child->states[i+1]) {
             return;
         }
     }
 
-    node = first.node;
-    children.clear();
+    states[index] = child->states[0];
+    child         = nullptr;
 }
 
-
-bool SVO::hasGrandChildren() const {
-    for(const SVO &child : children) {
-        if(child.children.size() > 0) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-bool SVO::isLit(const ivec3 &coords) const {
-    if(compressed && height == 3) {
-        const int z = coords.z & 0b111;
-
-        return children[z].node.isLit(coords.x, coords.y);
-    }
-
-    const int childIndex = Node::getIndex(coords >> height);
-
-    if(children.size() == 0) {
-        return node.childIsLit(childIndex);
-    }
-
-    return children[childIndex].isLit(coords);
-}
-
-bool SVO::isDim(const ivec3 &coords) const {
-    if(compressed && height == 3) {
-        const int z = coords.z & 0b111;
-
-        return children[z].node.isDim(coords.x, coords.y);
-    }
-
-    const int childIndex = Node::getIndex(coords >> height);
-
-    if(children.size() == 0) {
-        return node.childIsDim(childIndex);
-    }
-
-    return children[childIndex].isDim(coords);
-}
-
-void SVO::setLit(const ivec3 &coords) {
-    assert(!compressed);
-
-    const int childIndex = Node::getIndex(coords >> height);
-
-    // Too deep to have grandchildren
-    if(height == 0) {
-        node.childSetLit(childIndex);
-        return;
-    }
-    
-    // Create child nodes, if needed
-    if(!node.childIsNode(childIndex)) {
-        splitSelf();
-    }
-
-    // Recursive call and merge
-    children[childIndex].setLit(coords);
-    mergeSelf();
-}
-
-void SVO::setDim(const ivec3 &coords) {
-    assert(!compressed);
-
-    const int childIndex = Node::getIndex(coords >> height);
-
-    // Too deep to have grandchildren
-    if(height == 0) {
-        node.childSetDim(childIndex);
-        return;
-    }
-    
-    // Create child nodes, if needed
-    if(!node.childIsNode(childIndex)) {
-        splitSelf();
-    }
-
-    // Recursive call and merge
-    children[childIndex].setDim(coords);
-    mergeSelf();
-}
-
-void SVO::setLitAbove(const ivec2 &coords, const int z) {
-    assert(!compressed);
-
-    for(int i = z; i < size; i++) {
-        setLit(ivec3(coords, i));
-    }
-}
-
-void SVO::setDimAbove(const ivec2 &coords, const int z) {
-    assert(!compressed);
-
-    for(int i = z; i < size; i++) {
-        setDim(ivec3(coords, i));
-    }
-}
-
-void SVO::setLitBelow(const ivec2 &coords, const int z) {
-    assert(!compressed);
-
-    for(int i = 0; i < z; i++) {
-        setLit(ivec3(coords, i));
-    }
-}
-
-void SVO::setDimBelow(const ivec2 &coords, const int z) {
-    assert(!compressed);
-
-    for(int i = 0; i < z; i++) {
-        setDim(ivec3(coords, i));
-    }
-}
-
-// TODO not using correct resolution of UKN, consult paper (maybe I am already)
 void SVO::compress() {
-    // Compress bottom layers
-    // Each leaf is at a given z and stores 8 voxels in x and y
-    if(height == 3) {
-        Node leaves[8];
+    // std::cout << "Trying to compress now." << std::endl;
 
-        for(int z = 0; z < 8; z++) {
-            Node &leaf = leaves[z];
-
-            for(int x = 0; x < 8 ; x++) {
-                for(int y = 0; y < 8; y++) {
-                    // Don't need to bother with any UKN, can only be lit or not
-                    if(isLit(ivec3(x, y, z))) {
-                        leaf.setLit(x, y);
-                    }
-                }
-            }
+    // Compress children first
+    for(int index = 0; index < 8; index++) {
+        if(states[index] == SPL) {
+            children[index]->compress();
         }
+    }
 
-        children.clear();
-        for(int i = 0; i < 8; i++) {
-            
-            children.emplace_back(leaves[i], height - 1, size / 2);
+    // Resolve UKN
+    bool allLitOrUkn = true;
+    for(int index = 0; index < 8; index++) {
+        const TreeState state = states[index];
+        
+        if(state != TreeState::LIT || state != TreeState::UKN) {
+            allLitOrUkn = false;
+            break;
+        }
+    }
+
+    if(allLitOrUkn) {
+        for(int index = 0; index < 8; index++) {
+            states[index] = TreeState::LIT;
         }
     } else {
-        // Compress recurisively
-        for(SVO &child : children) {
-            child.compress();
-        }
-
-        if(!hasGrandChildren()) {
-            bool allLit = true;
-            for(int i = 0; i < 8; i++) {
-                if(!node.childIsUkn(i)) {
-                    if(!node.childIsLit(i)) allLit = false;
-                }
-            }
-
-            if(allLit) {
-                for(int i = 0; i < 8; i++) {
-                    node.childSetLit(i);
-                }            
-            } else {
-                for(int i = 0; i < 8; i++) {
-                    if(node.childIsUkn(i)) {
-                        node.childSetDim(i);
-                    }
-                }
-            }
-
-            mergeSelf();
-        } else {
-            for(int i = 0; i < 8; i++) {
-                if(node.childIsUkn(i)) {
-                    node.childSetDim(i);
-                }
+        for(int index = 0; index < 8; index++) {
+            if(states[index] == TreeState::UKN) {
+                states[index] = TreeState::DIM;
             }
         }
     }
-    
-    compressed = true;
+
+    // Try to merge them all
+    for(int index = 0; index < 8; index++) {
+        merge(index);
+    }
+
+    // Point from one to next
+    for(int index = 0; index < 7; index++) {
+        std::shared_ptr<SVO> &a = children[index];
+        std::shared_ptr<SVO> &b = children[index + 1];
+
+        if(a == nullptr || b == nullptr) {
+            continue;
+        }
+
+        if(a == b) {
+            continue; // Already pointing to same thing
+        }
+
+        if(*a == *b) {
+            a = b;    // They're the same, can point to same
+        }
+    }
+}
+
+bool SVO::is(const int index, const TreeState state) const {
+    return is(index) == state;
+}
+
+TreeState SVO::is(const int index) const {
+    return states[index];
+}
+
+bool SVO::is(const ivec3 &coords, const TreeState state) const {
+    return is(coords) == state;
+}
+
+TreeState SVO::is(const ivec3 &coords) const {
+    const int index = getIndex(coords >> height);
+
+    const TreeState state = states[index];
+    if(state != TreeState::SPL) {
+        return state;
+    }
+
+    return children[state]->is(coords);
+}
+
+void SVO::inputHierarchy(const Hierarchy &hierarchy, const int baseX, const int baseY, const int baseZ) {
+    std::cout << "Called input hierarchy for height: " << height << std::endl;
+
+    for(int y = 0; y < 2; y++) {
+        const int realX = baseY + y;
+
+        for(int x = 0; x < 2; x++) {
+            const int realY = baseX + x;
+
+            // float entry = hierarchy.getEntry(ivec2(x, y), height);
+            // float exit  = hierarchy.getExit( ivec2(x, y), height);
+
+            // for(int z = 0; z < 2; z++) {
+            //     const int index = getIndex(ivec3(x, y, z));
+
+            //     const int realZ = parentPos.z + ((z + 1) << height);
+
+            //     std::cout << entry << " " << realZ << " " << exit << std::endl;
+            //     if(realZ < entry) {
+            //         std::cout << "lit" << std::endl;
+            //         states[index] = TreeState::LIT;
+            //         // set(ivec3(x, y, z), TreeState::LIT);
+            //     } else if(realZ > exit) {
+            //         std::cout << "dim" << std::endl;
+            //         states[index] = TreeState::DIM;
+            //         // set(ivec3(x, y, z), TreeState::DIM);
+            //     } else if(height == 0) {
+            //         // Just leave it undefined
+            //     } else {
+            //         split(index); // TODO make new split function
+
+            //         children[index]->inputHierarchy(hierarchy, parentPos + (ivec3(x, y, z) << height));
+            //     }
+            // }
+
+            float minEntry = hierarchy.getMinEntry(ivec2(x, y), height);
+            float maxEntry = hierarchy.getMaxEntry(ivec2(x, y), height);
+            float minExit  = hierarchy.getMinExit( ivec2(x, y), height);
+            float maxExit  = hierarchy.getMaxExit( ivec2(x, y), height);
+
+            for(int z = 0; z < 2; z++) {
+                const int index = getIndex(ivec3(x, y, z));
+
+                const int minZ = baseZ + ((z + 0) << height);
+                const int midZ = baseZ + ((z + 0.5) * (1 << height));
+                const int maxZ = baseZ + ((z + 1)  << height);
+                // const int realZ = parentPos.z + ((z + 1) << height);
+
+                std::cout << minEntry << " " << maxEntry << ", " << minZ << " " << maxZ << ", " << minExit << " " << maxExit << std::endl;
+                // if(maxZ < minEntry) {
+                //     std::cout << "lit" << std::endl;
+                //     states[index] = TreeState::LIT;
+                // } else if(minZ >= minExit) {
+                //     std::cout << "dim" << std::endl;
+                //     states[index] = TreeState::DIM;
+                // } else if(minZ < maxEntry || maxZ < maxExit) {
+                //     if(height > 0) {
+                //         std::cout << "spl" << std::endl;
+                //         split(index); // TODO make new split function
+                //         children[index]->inputHierarchy(hierarchy, realX << 1, realY << 1, minZ);
+                //     } else {
+                //         states[index] = TreeState::UKN;
+                //         std::cout << "ukn" << std::endl;                        
+                //     }
+                // } else {
+                //     states[index] = TreeState::UKN;
+                //     std::cout << "ukn" << std::endl;
+                // }
+                // } else if(maxZ > maxEntry && minZ < maxExit) {
+                //     std::cout << "ukn" << std::endl;
+                //     states[index] = TreeState::DIM;
+                // } else if(height > 0) {
+                //     split(index); // TODO make new split function
+
+                //     children[index]->inputHierarchy(hierarchy, parentPos + (ivec3(x, y, z) << height));
+                // }
+
+                if(minZ <= minEntry) {
+                    std::cout << "lit" << std::endl;
+                    states[index] = TreeState::LIT;
+                } else if(minZ > maxEntry) {
+                    std::cout << "ukn" << std::endl;
+                    // split(index); // TODO make new split function
+                    // children[index]->inputHierarchy(hierarchy, realX << 1, realY << 1, minZ);
+                } else if(minZ >= maxExit) {
+                    std::cout << "dim" << std::endl;
+                    states[index] = TreeState::DIM;
+                } else if(maxZ < minExit) {
+                    std::cout << "ukn" << std::endl;
+                } else {
+                    if(height > 0) {
+                        std::cout << "spl" << std::endl;
+                        split(index); // TODO make new split function
+                        children[index]->inputHierarchy(hierarchy, realX << 1, realY << 1, minZ);
+                    } else {
+                        std::cout << "ukn" << std::endl;
+                    }
+                }
+                
+                // else if(maxZ >= minExit) {
+                //     std::cout << "dim" << std::endl;
+                //     states[index] = TreeState::DIM;
+                // } else {
+                //     if(height > 0) {
+                //         std::cout << "spl" << std::endl;
+                //         split(index); // TODO make new split function
+                //         children[index]->inputHierarchy(hierarchy, realX << 1, realY << 1, minZ);
+                //     } else {
+                //         std::cout << "ukn" << std::endl;
+                //     }
+                // }
+
+                // if(realZ < minEntry) { // Lit
+                //     std::cout << "lit" << std::endl;
+                //     states[index] = TreeState::LIT;
+                //     // set(ivec3(x, y, z), TreeState::LIT);
+                // } else if(realZ < maxEntry) {
+                //     if(height > 0) {
+                //         split(index); // TODO make new split function
+
+                //         children[index]->inputHierarchy(hierarchy, parentPos + (ivec3(x, y, z) << height));
+                //     }                
+                // }else if(realZ > maxExit) { // Dim
+                //     std::cout << "dim" << std::endl;
+                //     states[index] = TreeState::DIM;
+                //     // set(ivec3(x, y, z), TreeState::DIM);
+                // } else if(realZ > minExit) { // Unknown, go more fine
+                //     if(height > 0) {
+                //         split(index); // TODO make new split function
+
+                //         children[index]->inputHierarchy(hierarchy, parentPos + (ivec3(x, y, z) << height));
+                //     }
+                // } else {
+                //     // Just ukn
+                //     std::cout << "ukn" << std::endl;
+                // }
+            }
+        }
+    }
+
+    compress();
+}
+
+void SVO::set(const ivec3 &coords, const TreeState state) {
+    const int index = getIndex(coords >> height);
+
+    if(height == 0) {
+        states[index] = state;
+    } else if(states[index] != state) { // If already state, don't care
+        if(states[index] != TreeState::SPL) {
+            split(index);
+        }
+
+        children[index]->set(coords, state);
+        merge(index);
+    }
+}
+
+void SVO::setBelow(const ivec2 &coords, const int z, const TreeState state) {
+    for(int i = 0; i < z; i++) {
+        set(ivec3(coords, i), state);
+    }
+}
+
+void SVO::setAbove(const ivec2 &coords, const int z, const TreeState state) {
+   for(int i = z; i < (2 << (height)); i++) {
+        set(ivec3(coords, i), state);
+    }
+}
+
+const std::shared_ptr<SVO> * SVO::getChildren() const {
+    return children;
 }
 
 bool operator==(const SVO &a, const SVO &b) {
-    if(a.node != b.node) {
+    if(a.height != b.height) {
         return false;
     }
 
-    if(a.children.size() != b.children.size()) {
-        return false;
-    }
+    for(int index = 0; index < 8; index++) {
+        const TreeState aState = a.states[index];
+        const TreeState bState = b.states[index];
 
-    for(int i = 0; i < a.children.size() && i < b.children.size(); i++) {
-        if(a.children[i] != b.children[i]) {
+        // One state is solid, simple check
+        if(aState != TreeState::SPL || bState != TreeState::SPL) {
+            if(aState != bState) {
+                return false;
+            }
+        }
+
+        const std::shared_ptr<SVO> &aChild = a.children[index];
+        const std::shared_ptr<SVO> &bChild = b.children[index];
+
+        // Pointer comparison
+        if(aChild == bChild) {
+            continue;
+        }
+
+        // Full child check
+        if(aChild != bChild) {
             return false;
         }
     }
@@ -247,16 +345,31 @@ bool operator==(const SVO &a, const SVO &b) {
 }
 
 bool operator!=(const SVO &a, const SVO &b) {
-    if(a.node != b.node) {
+    if(a.height != b.height) {
         return true;
     }
 
-    if(a.children.size() != b.children.size()) {
-        return true;
-    }
+    for(int index = 0; index < 8; index++) {
+        const TreeState aState = a.states[index];
+        const TreeState bState = b.states[index];
 
-    for(int i = 0; i < a.children.size() && i < b.children.size(); i++) {
-        if(a.children[i] != b.children[i]) {
+        // One state is solid, simple check
+        if(aState != TreeState::SPL || bState != TreeState::SPL) {
+            if(aState != bState) {
+                return true;
+            }
+        }
+
+        const std::shared_ptr<SVO> &aChild = a.children[index];
+        const std::shared_ptr<SVO> &bChild = b.children[index];
+
+        // Pointer comparison
+        if(aChild == bChild) {
+            continue;
+        }
+
+        // Full child check
+        if(aChild != bChild) {
             return true;
         }
     }

@@ -3,9 +3,28 @@
 #include <glm/glm.hpp>
 using namespace glm;
 
-#define DIM 0b1000
-#define LIT 0b1001
-#define UKN 0b1010
+namespace NodeState {
+    enum NodeState {
+        DIM = 0b1110,
+        LIT = 0b1111,
+        // UKN = 0b1010,
+
+        IN0  = 0b0000,
+        IN1  = 0b0001,
+        IN2  = 0b0010,
+        IN3  = 0b0011,
+        IN4  = 0b0100,
+        IN5  = 0b0101,
+        IN6  = 0b0110,
+        IN7  = 0b0111,
+        IN8  = 0b1000,
+        IN9  = 0b1001,
+        IN10 = 0b1010,
+        IN11 = 0b1011,
+        IN12 = 0b1100,
+        IN13 = 0b1101,
+    };
+};
 
 // TODO note that all functions assume acceptable values are given
 class Node {
@@ -23,7 +42,8 @@ private:
 protected:
 
 public:
-    Node(const int state = UKN);
+    // Node(const NodeState state = Node);
+    Node(const int state = NodeState::DIM);
     ~Node();
 
     // Convert to index
@@ -46,11 +66,11 @@ public:
     bool childIsLeaf(const int x, const int y, const int z) const;
     bool childIsLit(const int x, const int y, const int z) const;
     bool childIsDim(const int x, const int y, const int z) const;
-    bool childIsUkn(const int x, const int y, const int z) const;
+    // bool childIsUkn(const int x, const int y, const int z) const;
 
     void childSetLit(const int x, const int y, const int z);
     void childSetDim(const int x, const int y, const int z);
-    void childSetUkn(const int x, const int y, const int z);
+    // void childSetUkn(const int x, const int y, const int z);
 
     int  getChildrenBaseIndex() const;
     void setChildrenBaseIndex(const int childrenBaseIndex);
@@ -67,11 +87,11 @@ public:
     // Leaf functions (being treated as a leaf)
     bool isLit(const int x, const int y) const;
     bool isDim(const int x, const int y) const;
-    bool isUkn(const int x, const int y) const;
+    // bool isUkn(const int x, const int y) const;
 
     void setLit(const int x, const int y);
     void setDim(const int x, const int y);
-    bool setUkn(const int x, const int y);
+    // bool setUkn(const int x, const int y);
 
     // TODO implement
     // bool isAllLit() const;

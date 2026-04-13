@@ -1,0 +1,3 @@
+OBJS := hierarchy.o
+DIRS := 
+include $(SUB_MAKE_INCLUDE)

@@ -1,4 +1,4 @@
-#version 330 core
+#version 430 core
 
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 aNormal;
@@ -6,23 +6,24 @@ layout(location = 2) in vec2 aTexCoords;
 layout(location = 3) in vec3 aTangent;
 layout(location = 4) in vec3 aBitangent;
 
-uniform mat4 mvp;
 uniform mat4 model;
-
-out vec3 pos;
-out vec3 normal;
-out vec2 texCoords;
-out vec4 posLightSpace;
-
-uniform mat4 lightSpaceMatrix;
-
-void main() {
-    pos       = vec3(model * vec4(aPos, 1.0));
-    normal    = mat3(transpose(inverse(model))) * aNormal;
-    texCoords = aTexCoords;
+uniform mat4 view;
+uniform mat4 proj;
 
 
-    posLightSpace = lightSpaceMatrix * vec4(pos, 1.0);
+out vec4 FragPos;          
+out vec3 Normal;         
+out vec2 TexCoords;
+// out vec4 FragPosLightSpace; // vertex position in light space
 
-    gl_Position = mvp * vec4(aPos, 1.0);
+void main()
+{
+    FragPos = model * vec4(aPos, 1.0);
+    Normal = mat3(transpose(inverse(model))) * aNormal;
+    TexCoords = aTexCoords;
+
+    // Transform vertex to light space
+    // FragPosLightSpace = lightSpaceMatrix * model * vec4(aPos, 1.0);
+
+    gl_Position = proj * view * model * vec4(aPos, 1.0);
 }

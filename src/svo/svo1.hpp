@@ -1,25 +1,33 @@
 #pragma once
 
-#include <memory>
 #include <vector>
 
 #include <glm/glm.hpp>
 using namespace glm;
 
-class Hierarchy;
+// #include "node.hpp"
 
-enum TreeState {
-    LIT,
-    DIM,
-    UKN,
+// namespace TreeState {
+    enum TreeState {
+        LIT = 0b1000,
+        DIM = 0b1001,
+        UKN = 0b1010,
 
-    SPL // Remove and have a != nullptr check on children
-};
+        IN0 = 0b0000,
+        IN1 = 0b0001,
+        IN2 = 0b0010,
+        IN3 = 0b0011,
+        IN4 = 0b0100,
+        IN5 = 0b0101,
+        IN6 = 0b0110,
+        IN7 = 0b0111
+    };
+// };
 
 class SVO {
 private:
-    TreeState            states[8];
-    std::shared_ptr<SVO> children[8];
+    TreeState        states[8];
+    std::vector<SVO> children;
 
     const int height;
 
@@ -32,20 +40,24 @@ public:
     SVO();
     SVO(const int height, const TreeState state = TreeState::UKN);
 
+    // SVO(const int height, const int size);
+    // SVO(const int height, const int size, const Node &node);
     ~SVO();
 
     void split(const int index);
     void merge(const int index);
     void compress();
 
+    // bool      is(const TreeState state) const;
+    // TreeState is() const;
+
+    // void set(const TreeState state);
+
     bool      is(const int index, const TreeState state) const;
     TreeState is(const int index) const;
 
     bool      is(const ivec3 &coords, const TreeState state) const;
     TreeState is(const ivec3 &coords) const;
-
-    // void inputHierarchy(const Hierarchy &hierarchy, const ivec3 &parentPos = ivec3(0, 0, 0));
-    void inputHierarchy(const Hierarchy &hierarchy, const int baseX = 0, const int baseY = 0, const int baseZ = 0);
 
     void set(const ivec3 &coords, const TreeState state);
     void setBelow(const ivec2 &coords, const int z, const TreeState state);
@@ -56,8 +68,27 @@ public:
     void setBelow(const ivec2 &coords, const int z, const TreeState state, const int size);
     void setAbove(const ivec2 &coords, const int z, const TreeState state, const int size);
 
-    const std::shared_ptr<SVO> * getChildren() const;
+    const std::vector<SVO> & getChildren() const;
     int getDistinctChildren() const;
+    
+    // void splitSelf();
+    // void mergeSelf();
+
+    // bool hasGrandChildren() const;
+
+    // bool isLit(const ivec3 &coords) const;
+    // bool isDim(const ivec3 &coords) const;
+
+    // void setLit(const ivec3 &coords);
+    // void setDim(const ivec3 &coords);
+
+    // void setLitAbove(const ivec2 &coords, const int z);
+    // void setDimAbove(const ivec2 &coords, const int z);
+
+    // void setLitBelow(const ivec2 &coords, const int z);
+    // void setDimBelow(const ivec2 &coords, const int z);
+
+    // void compress();
 
     friend bool operator==(const SVO &a, const SVO &b);
     friend bool operator!=(const SVO &a, const SVO &b);

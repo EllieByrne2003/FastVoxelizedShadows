@@ -108,8 +108,8 @@ void MeshModel::drawDepths(const Scene *const scene, const Light &light, const b
     mesh->draw();
 }
 
-void MeshModel::bindTexture(const GLuint loc) const {
-    texture->bind(loc, 0); // TODO accept slot as parameter
+void MeshModel::bindTexture(const GLuint loc, const int slot) const {
+    texture->bind(loc, slot); // TODO accept slot as parameter
 }
 
 void MeshModel::expandBounds(Bounds &bounds, const mat4 &view, const mat4 &proj, const mat4 &parentModel) const {

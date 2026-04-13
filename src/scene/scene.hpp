@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#include "../svo/forest.hpp"
 #include "../light/light.hpp"
 #include "../camera/camera.hpp"
 
@@ -27,6 +28,8 @@ private:
     GLuint FBO;
     GLuint lightsSSBO;
     TextureArray *depthMaps = nullptr;
+
+    Forest forest;
     
 protected:
 
@@ -59,6 +62,7 @@ public:
     // TODO temporary
     mat4 getLightMatrix() const;
 
-    void bindLights(const GLuint lightCountLoc) const;
+    void bindLights(const GLuint lightCountLoc, const int lightIndex) const;
+    void bindVoxels(const GLuint voxelsLoc, const GLuint voxelCountLoc, const int slot) const;
     void bindDepthMaps(const GLuint depthmapsLoc, const int slot) const;
 };

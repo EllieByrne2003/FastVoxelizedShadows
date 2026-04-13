@@ -16,6 +16,20 @@ using namespace glm;
 void processKey(Scene *scene, GLFWwindow *window);
 void processCursorPos(Scene *scene, const double xPos, const double yPos);
 
+void GLAPIENTRY OpenGLDebugCallback(
+	GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, 
+	const GLchar* message, const void* userParam)
+{
+	// Print the error message
+  std::cerr << "OpenGL Debug Message:\n";
+  std::cerr << "Source  : " << source << "\n";
+  std::cerr << "Type    : " << type << "\n";
+  std::cerr << "ID      : " << id << "\n";
+  std::cerr << "Severity: " << severity << "\n";
+  std::cerr << "Message : " << message << "\n\n"; 
+}
+
+
 int main() {
     if(!glfwInit()) {
         std::cerr << "Failed to initialize GLFW." << std::endl;
@@ -34,10 +48,18 @@ int main() {
 
     glfwMakeContextCurrent(window);
 
+    glewExperimental = GL_TRUE;
     if(glewInit() != GLEW_OK) {
         std::cerr << "Failed to initialize GLEW." << std::endl;
         return -1;
     }
+
+	// Enable OpenGL debug output
+	glEnable(GL_DEBUG_OUTPUT);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); // To make the callback synchronous
+
+	// Register the debug callback
+	glDebugMessageCallback(OpenGLDebugCallback, nullptr);
 
     std::string sceneName("test.json");
     std::cout << "loading: " << sceneName << std::endl;
@@ -67,11 +89,12 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     scene->setupLights(false); // TODO should be true, this should be called each frame
 
-    const mat4 projection = glm::perspective(glm::radians(45.0f), 1024.0f / 1024.0f, 0.1f, 100.0f);
+    const mat4 projection = glm::perspective(glm::radians(45.0f), 1980.0f / 1080.0f, 0.1f, 100.0f);
     // Renderer::getInstance().setProj(projection);
     
     glEnable(GL_DEPTH_TEST);
-    // glCullFace(GL_FRONT);
+    // glEnable(GL_CULL_FACE);
+    // glCullFace(GL_BACK);
 
     do {
         glClearColor(0.3f, 0.0f, 0.5f, 1.0f);
@@ -87,6 +110,7 @@ int main() {
 
         // Draw scene
         Renderer::getInstance().setProj(projection);
+        scene->resizeView(1980, 1080);
         scene->draw();
 
         glfwPollEvents();
